@@ -27,16 +27,45 @@ public:
 	virtual void GetLifetimeReplicatedProps(
 		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
 protected:
 	virtual void BeginPlay() override;
 
+	/**
+	 * Handles aiming for the server. The server will have the aiming flag set
+	 * in SetAiming, then replicate it down to the clients with ServerSetAiming.
+	 */
+	void SetAiming(bool bAiming);
+	UFUNCTION(Server, Reliable)
+	void ServerSetAiming(bool bAiming);
+
+	/**
+	 * Server variable replication for the movement parameters on equipping a
+	 * weapon
+	 */
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
+
 private:
 	ABlasterCharacter* Character;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
+	UPROPERTY(Replicated)
+	bool bIsAiming;
+
+	/** Walking speed while not aiming */
+	UPROPERTY(EditAnywhere)
+	float BaseWalkSpeed;
+
+	/** 
+	 * Walking speed while aiming. Has to be replicated from server to clients
+	 * within ServerSetAiming
+	 * Note that we need to set these here, because the base character movement
+	 * functionality only provides movement speeds for walking and crouching.
+	 */
+	UPROPERTY(EditAnywhere)
+	float AimWalkSpeed;
 };

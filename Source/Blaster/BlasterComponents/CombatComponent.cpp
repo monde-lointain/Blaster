@@ -6,18 +6,59 @@
 #include "Blaster/Weapon/Weapon.h"
 #include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	BaseWalkSpeed = 1000.0f;
+	AimWalkSpeed = 750.0f;
 }
 
 // Called when the game starts
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
+}
+
+void UCombatComponent::SetAiming(bool bAiming)
+{
+	bIsAiming = bAiming;
+	ServerSetAiming(bAiming);
+
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed =
+			bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+}
+
+void UCombatComponent::ServerSetAiming_Implementation(bool bAiming)
+{
+	bIsAiming = bAiming;
+
+	if (Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed =
+			bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (Character && EquippedWeapon)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 // Called every frame
@@ -34,6 +75,9 @@ void UCombatComponent::GetLifetimeReplicatedProps(
 
 	// Register the equipped weapon to be replicated by the server
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+
+	// Register the aiming flag to be replicated by the server
+	DOREPLIFETIME(UCombatComponent, bIsAiming);
 }
 
 // NOTE: Called by the server only. For the variable replication implementation
@@ -65,4 +109,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// Automatically replicated by the actor class method AActor::OnRep_Owner
 	EquippedWeapon->SetOwner(Character);
+
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 }

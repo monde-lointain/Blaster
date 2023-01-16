@@ -89,4 +89,9 @@ public:
 	{
 		return AreaSphere;
 	}
+
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const
+	{
+		return WeaponMesh;
+	}
 };
