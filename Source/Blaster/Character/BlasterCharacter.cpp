@@ -11,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "BlasterAnimInstance.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -94,12 +95,17 @@ void ABlasterCharacter::SetupPlayerInputComponent(
 		"Aim", IE_Pressed, this, &ABlasterCharacter::AimButtonPressed);
 	PlayerInputComponent->BindAction(
 		"Aim", IE_Released, this, &ABlasterCharacter::AimButtonReleased);
+	PlayerInputComponent->BindAction(
+		"Fire", IE_Pressed, this, &ABlasterCharacter::FireButtonPressed);
+	PlayerInputComponent->BindAction(
+		"Fire", IE_Released, this, &ABlasterCharacter::FireButtonReleased);
 
 	PlayerInputComponent->BindAxis(
 		"MoveForward", this, &ABlasterCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(
 		"MoveRight", this, &ABlasterCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("LookUp", this, &ABlasterCharacter::LookUp);
+	PlayerInputComponent->BindAxis(
+		"LookUp", this, &ABlasterCharacter::LookUp);
 	PlayerInputComponent->BindAxis(
 		"LookRight", this, &ABlasterCharacter::LookRight);
 }
@@ -111,6 +117,61 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->Character = this;
+	}
+}
+
+void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
+{
+	if (!Combat || !Combat->EquippedWeapon)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Green,
+				FString(TEXT("PlayFireMontage"))
+			);
+		}
+
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		FName SectionName;
+		SectionName = bIsAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName, FireWeaponMontage);
+
+		if (AnimInstance->Montage_IsPlaying(FireWeaponMontage))
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Green,
+				FString(TEXT("Montage is playing!"))
+			);
+		}
+
+		if (AnimInstance->Montage_IsActive(FireWeaponMontage))
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.0f,
+				FColor::Green,
+				FString(TEXT("Montage is active!"))
+			);
+		}
+
+		FName CurrentSection = AnimInstance->Montage_GetCurrentSection();
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.0f,
+			FColor::Green,
+			FString::Printf(TEXT("Playing: %s"), *CurrentSection.ToString())
+		);
 	}
 }
 
@@ -209,6 +270,42 @@ void ABlasterCharacter::AimButtonReleased()
 	}
 }
 
+void ABlasterCharacter::FireButtonPressed()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.0f,
+			FColor::Green,
+			FString(TEXT("FireButtonPressed"))
+		);
+	}
+
+	if (Combat)
+	{
+		Combat->FireButtonPressed(true);
+	}
+}
+
+void ABlasterCharacter::FireButtonReleased()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.0f,
+			FColor::Green,
+			FString(TEXT("FireButtonReleased"))
+		);
+	}
+
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
+}
+
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
 	// If we're not holding a weapon
@@ -267,15 +364,15 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 			FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			0,
-			15.0f,
-			FColor::Green,
-			FString::Printf(TEXT("AO_Yaw: %f\nAO_Pitch: %f"), AO_Yaw, AO_Pitch)
-		);
-	}
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(
+	//		0,
+	//		15.0f,
+	//		FColor::Green,
+	//		FString::Printf(TEXT("AO_Yaw: %f\nAO_Pitch: %f"), AO_Yaw, AO_Pitch)
+	//	);
+	//}
 }
 
 void ABlasterCharacter::Jump()

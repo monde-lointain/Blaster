@@ -47,6 +47,8 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	void FireButtonPressed(bool bPressed);
+
 private:
 	ABlasterCharacter* Character;
 
@@ -68,4 +70,7 @@ private:
 	 */
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
+
+	/** Indicates whether the fire buton has been pressed or not. */
+	bool bFireButtonPressed;
 };

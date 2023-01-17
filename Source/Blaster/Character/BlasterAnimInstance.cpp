@@ -70,15 +70,15 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	// outside the bounds
 	Lean = FMath::Clamp(Interpolated, -90.0f, 90.0f);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			15.0f,
-			FColor::Green,
-			FString::Printf(TEXT("Lean: %f"), Lean)
-		);
-	}
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(
+	//		1,
+	//		15.0f,
+	//		FColor::Green,
+	//		FString::Printf(TEXT("Lean: %f"), Lean)
+	//	);
+	//}
 
 	AO_Yaw = BlasterCharacter->GetAO_Yaw();
 	AO_Pitch = BlasterCharacter->GetAO_Pitch();
