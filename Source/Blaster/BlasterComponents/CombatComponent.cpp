@@ -65,9 +65,17 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	// Play the fire montage on the character and play the fire animation on the
+	// weapon
 	if (Character && bFireButtonPressed)
 	{
 		Character->PlayFireMontage(bIsAiming);
+		EquippedWeapon->Fire();
 	}
 }
 

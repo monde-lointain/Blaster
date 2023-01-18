@@ -7,6 +7,10 @@
 
 #include "Weapon.generated.h"
 
+class USphereComponent;
+class UWidgetComponent;
+class UAnimationAsset;
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -16,9 +20,6 @@ enum class EWeaponState : uint8
 
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
-
-class USphereComponent;
-class UWidgetComponent;
 
 UCLASS()
 class BLASTER_API AWeapon : public AActor
@@ -38,6 +39,9 @@ public:
 
 	/** Turns the widget displayed when overlapping a weapon on and off */
 	void ShowPickupWidget(bool bShowWidget);
+
+	/** Handles elements of firing assigned to the weapon */
+	void Fire();
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -94,4 +98,7 @@ public:
 	{
 		return WeaponMesh;
 	}
+
+	UPROPERTY(EditAnywhere, Category = WeaponProperties)
+	UAnimationAsset* FireAnimation;
 };
