@@ -192,6 +192,10 @@
 			"SupportedTargetPlatforms": [
 				"Mac"
 			]
+		},
+		{
+			"Name": "GameplayInsights",
+			"Enabled": true
 		}
 	]
 }

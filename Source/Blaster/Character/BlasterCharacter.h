@@ -41,7 +41,7 @@ public:
 	 */
 	virtual void PostInitializeComponents() override;
 
-	void PlayFireMontage(bool bIsAiming);
+	void PlayFireMontage(bool bAiming);
 
 protected:
 	/** Called when the game starts or when spawned */

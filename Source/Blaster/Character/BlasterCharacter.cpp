@@ -120,7 +120,7 @@ void ABlasterCharacter::PostInitializeComponents()
 	}
 }
 
-void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
+void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (!Combat || !Combat->EquippedWeapon)
 	{
@@ -128,50 +128,13 @@ void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
 	}
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
 	if (AnimInstance && FireWeaponMontage)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.0f,
-				FColor::Green,
-				FString(TEXT("PlayFireMontage"))
-			);
-		}
-
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName;
-		SectionName = bIsAiming ? FName("RifleAim") : FName("RifleHip");
-		AnimInstance->Montage_JumpToSection(SectionName, FireWeaponMontage);
-
-		if (AnimInstance->Montage_IsPlaying(FireWeaponMontage))
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.0f,
-				FColor::Green,
-				FString(TEXT("Montage is playing!"))
-			);
-		}
-
-		if (AnimInstance->Montage_IsActive(FireWeaponMontage))
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.0f,
-				FColor::Green,
-				FString(TEXT("Montage is active!"))
-			);
-		}
-
-		FName CurrentSection = AnimInstance->Montage_GetCurrentSection();
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			15.0f,
-			FColor::Green,
-			FString::Printf(TEXT("Playing: %s"), *CurrentSection.ToString())
-		);
+		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
 
@@ -272,16 +235,6 @@ void ABlasterCharacter::AimButtonReleased()
 
 void ABlasterCharacter::FireButtonPressed()
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			15.0f,
-			FColor::Green,
-			FString(TEXT("FireButtonPressed"))
-		);
-	}
-
 	if (Combat)
 	{
 		Combat->FireButtonPressed(true);
@@ -290,16 +243,6 @@ void ABlasterCharacter::FireButtonPressed()
 
 void ABlasterCharacter::FireButtonReleased()
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			15.0f,
-			FColor::Green,
-			FString(TEXT("FireButtonReleased"))
-		);
-	}
-
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
