@@ -7,15 +7,28 @@
 #include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	BaseWalkSpeed = 1000.0f;
 	AimWalkSpeed = 750.0f;
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(
+	TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Register the equipped weapon to be replicated by the server
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+
+	// Register the aiming flag to be replicated by the server
+	DOREPLIFETIME(UCombatComponent, bIsAiming);
 }
 
 // Called when the game starts
@@ -65,6 +78,23 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
+	// Whenever a client pressed the fire button, call the server RPC for firing
+	// a weapon.
+	if (bFireButtonPressed)
+	{
+		ServerFire();
+	}
+}
+
+// When a client calls this server RPC, the server will execute its multicast
+// RPC which will replicate the fire routines back down to the clients
+void UCombatComponent::ServerFire_Implementation()
+{
+	MulticastFire();
+}
+
+void UCombatComponent::MulticastFire_Implementation()
+{
 	if (!EquippedWeapon)
 	{
 		return;
@@ -72,10 +102,73 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 	// Play the fire montage on the character and play the fire animation on the
 	// weapon
-	if (Character && bFireButtonPressed)
+	if (Character)
 	{
 		Character->PlayFireMontage(bIsAiming);
 		EquippedWeapon->Fire();
+	}
+}
+
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("TraceUnderCrosshairs"))
+
+	FVector2D ViewportSize;
+
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	FVector2D CrosshairLocation(ViewportSize.X / 2.0f, ViewportSize.Y / 2.0f);
+
+	// Get the world coordinates of the crosshairs from the 2D crosshair
+	// location
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+
+	bool bDeprojectionSuccessful = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+
+	// Perform a line trace starting from the center of the screen
+	if (bDeprojectionSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DeprojectionSuccessful"))
+
+		const float LINETRACE_LENGTH = 80000.0f;
+		FVector Start = CrosshairWorldPosition;
+		FVector End = CrosshairWorldPosition +
+					  (CrosshairWorldDirection * LINETRACE_LENGTH);
+
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult, 
+			Start, 
+			End, 
+			ECollisionChannel::ECC_Visibility
+		);
+
+
+		// If we didn't hit anything just set the impact point to wherever the
+		// linetrace ended
+		if (!TraceHitResult.bBlockingHit)
+		{
+			TraceHitResult.ImpactPoint = End;
+		}
+		else
+		{
+		}
+
+		DrawDebugSphere(
+			GetWorld(),
+			TraceHitResult.ImpactPoint,
+			12.0f,
+			8,
+			FColor::Red
+		);
 	}
 }
 
@@ -84,18 +177,9 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
 
-void UCombatComponent::GetLifetimeReplicatedProps(
-	TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	// Register the equipped weapon to be replicated by the server
-	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
-
-	// Register the aiming flag to be replicated by the server
-	DOREPLIFETIME(UCombatComponent, bIsAiming);
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 }
 
 // NOTE: Called by the server only. For the variable replication implementation

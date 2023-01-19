@@ -47,7 +47,25 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	/** Called whenever a player presses the fire button. */
 	void FireButtonPressed(bool bPressed);
+
+	/**
+	 * Server RPC for firing weapons. Called by clients and executed on the
+	 * server
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerFire();
+
+	/**
+	 * Multicast RPC for firing weapons. Called by the server and replicated
+	 * down to all clients
+	 */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire();
+
+	/** Performs a line trace starting from the center of the screen */
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 private:
 	ABlasterCharacter* Character;
