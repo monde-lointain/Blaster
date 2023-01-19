@@ -41,7 +41,7 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 
 	/** Handles elements of firing assigned to the weapon */
-	void Fire();
+	virtual void Fire(const FVector &HitTarget);
 
 protected:
 	/** Called when the game starts or when spawned */

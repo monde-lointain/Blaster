@@ -55,14 +55,14 @@ protected:
 	 * server
 	 */
 	UFUNCTION(Server, Reliable)
-	void ServerFire();
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 
 	/**
 	 * Multicast RPC for firing weapons. Called by the server and replicated
 	 * down to all clients
 	 */
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire();
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	/** Performs a line trace starting from the center of the screen */
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);

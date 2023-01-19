@@ -78,41 +78,41 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
-	// Whenever a client pressed the fire button, call the server RPC for firing
-	// a weapon.
+	// Calculate the hit result, then call the server RPC for firing a weapon.
 	if (bFireButtonPressed)
 	{
-		ServerFire();
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		ServerFire(HitResult.ImpactPoint);
 	}
 }
 
 // When a client calls this server RPC, the server will execute its multicast
 // RPC which will replicate the fire routines back down to the clients
-void UCombatComponent::ServerFire_Implementation()
+void UCombatComponent::ServerFire_Implementation(
+	const FVector_NetQuantize& TraceHitTarget)
 {
-	MulticastFire();
+	MulticastFire(TraceHitTarget);
 }
 
-void UCombatComponent::MulticastFire_Implementation()
+// Plays on all clients and the server
+void UCombatComponent::MulticastFire_Implementation(
+	const FVector_NetQuantize& TraceHitTarget)
 {
 	if (!EquippedWeapon)
 	{
 		return;
 	}
 
-	// Play the fire montage on the character and play the fire animation on the
-	// weapon
 	if (Character)
 	{
 		Character->PlayFireMontage(bIsAiming);
-		EquippedWeapon->Fire();
+		EquippedWeapon->Fire(TraceHitTarget);
 	}
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("TraceUnderCrosshairs"))
-
 	FVector2D ViewportSize;
 
 	if (GEngine && GEngine->GameViewport)
@@ -137,8 +137,6 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	// Perform a line trace starting from the center of the screen
 	if (bDeprojectionSuccessful)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DeprojectionSuccessful"))
-
 		const float LINETRACE_LENGTH = 80000.0f;
 		FVector Start = CrosshairWorldPosition;
 		FVector End = CrosshairWorldPosition +
@@ -151,24 +149,13 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			ECollisionChannel::ECC_Visibility
 		);
 
-
-		// If we didn't hit anything just set the impact point to wherever the
-		// linetrace ended
-		if (!TraceHitResult.bBlockingHit)
-		{
-			TraceHitResult.ImpactPoint = End;
-		}
-		else
-		{
-		}
-
-		DrawDebugSphere(
-			GetWorld(),
-			TraceHitResult.ImpactPoint,
-			12.0f,
-			8,
-			FColor::Red
-		);
+		//DrawDebugSphere(
+		//	GetWorld(),
+		//	TraceHitResult.ImpactPoint,
+		//	2.0f,
+		//	8,
+		//	FColor::Red
+		//);
 	}
 }
 
@@ -177,9 +164,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
 }
 
 // NOTE: Called by the server only. For the variable replication implementation

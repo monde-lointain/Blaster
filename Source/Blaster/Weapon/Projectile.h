@@ -8,6 +8,9 @@
 #include "Projectile.generated.h"
 
 class UBoxComponent;
+class UProjectileMovementComponent;
+class UParticleSystem;
+class UParticleSystemComponent;
 
 UCLASS()
 class BLASTER_API AProjectile : public AActor
@@ -23,8 +26,20 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	/** The collision bounding box for the projectile */
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* CollisionBox;
+
+	/** Handles projectile movement */
+	UPROPERTY(VisibleAnywhere)
+	UProjectileMovementComponent* ProjectileMovementComponent;
+
+	/** Tracer particle for the bullet */
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* Tracer;
+
+	/** Component to store the tracer in once spawned */
+	UParticleSystemComponent* TracerComponent;
 
 public:
 	// Called every frame
