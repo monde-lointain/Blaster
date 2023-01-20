@@ -43,7 +43,13 @@ public:
 	 */
 	virtual void PostInitializeComponents() override;
 
+	/** Handles playing montages for a player firing weapons and getting hit */
 	void PlayFireMontage(bool bAiming);
+	void PlayHitReactMontage();
+
+	/** Server RPC for replicating hits */
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -102,8 +108,13 @@ private:
 
 	void TurnInPlace(float DeltaTime);
 
+	/** Animation montage for firing weapons */
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+
+	/** Animation montage for getting hit */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* HitReactMontage;
 
 	void HideCameraIfCharacterIsClose();
 

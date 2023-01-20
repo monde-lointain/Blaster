@@ -2,6 +2,8 @@
 
 #include "Projectile.h"
 
+#include "Blaster/Blaster.h"
+#include "Blaster/Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,6 +28,8 @@ AProjectile::AProjectile()
 		ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(
+		ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 
 	ProjectileMovementComponent =
 		CreateDefaultSubobject<UProjectileMovementComponent>(
@@ -63,6 +67,13 @@ void AProjectile::BeginPlay()
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& HitResult)
 {
 	/* TODO: Handle damage here... */
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
+
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->MulticastHit();
+	}
+
 	Destroy();
 }
 
@@ -77,8 +88,8 @@ void AProjectile::Destroyed()
 	Super::Destroyed();
 
 	/**
-	 * TODO: Doesn't always get played by clients. Change this to an RPC so it
-	 * definitively does
+	 * TODO: These almost never get played on clients. Change this to an
+	 * unreliable RPC maybe
 	 */
 	if (ImpactParticles)
 	{
