@@ -51,6 +51,9 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastHit();
 
+	/** Overridden to handle movement replication for simulated proxies */
+	virtual void OnRep_ReplicatedMovement() override;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
@@ -71,6 +74,11 @@ protected:
 	 * the direction they're pointing their weapon in
 	 */
 	void AimOffset(float DeltaTime);
+
+	void CalculateAO_Pitch();
+
+	/** Handles the yaw rotation for non-locally controlled characters */
+	void SimProxiesTurn();
 
 	virtual void Jump() override;
 
@@ -122,6 +130,28 @@ private:
 	UPROPERTY(EditAnywhere)
 	float HideCharacterDistance = 200.0f;
 
+	/** Indicates whether a character should rotate its root bone or not */
+	bool bShouldRotateRootBone;
+
+	/** Rotation angle for simulated proxies to turn in place after */
+	float TurnInPlaceThreshold = 0.5f;
+
+	/** Amount a simulated proxy has rotated since last frame */
+	FRotator ProxyRotationSinceLastFrame;
+
+	/** Amount a simulated proxy has rotated this frame */
+	FRotator ProxyRotationCurrentFrame;
+
+	/**
+	 * Difference in yaw rotation between the last and current frame for a
+	 * simulated proxy
+	 */
+	float ProxyYaw;
+
+	float TimeSinceLastMovementReplication;
+
+	float CalculateSpeed();
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -149,5 +179,10 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const
 	{
 		return FollowCamera;
+	}
+
+	FORCEINLINE bool ShouldRotateRootBone() const
+	{
+		return bShouldRotateRootBone;
 	}
 };

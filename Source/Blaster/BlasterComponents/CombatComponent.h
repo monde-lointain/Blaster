@@ -53,6 +53,8 @@ protected:
 	/** Called whenever a player presses the fire button. */
 	void FireButtonPressed(bool bPressed);
 
+	void Fire();
+
 	/**
 	 * Server RPC for firing weapons. Called by clients and executed on the
 	 * server
@@ -149,4 +151,16 @@ private:
 
 	/** Interpolates FOV when aiming */
 	void InterpFOV(float DeltaTime);
+
+	/** Indicates whether the player can fire or not */
+	bool bCanFire = true;
+
+	/** Handles the timer for intervals between firing for automatic weapons */
+	FTimerHandle FireTimer;
+
+	/** Sets the fire timer for a player */
+	void StartFireTimer();
+
+	/** Callback for when the fire timer has ended */
+	void FireTimerFinished();
 };

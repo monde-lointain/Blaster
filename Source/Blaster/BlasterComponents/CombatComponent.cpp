@@ -5,7 +5,6 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
-
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -214,33 +213,64 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bAiming)
 	}
 }
 
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if (Character && EquippedWeapon)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-}
-
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
-	// Calculate the hit result, then call the server RPC for firing a weapon.
+	// Call the server RPC for firing a weapon.
 	if (bFireButtonPressed)
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
+		Fire();
+	}
+}
+
+void UCombatComponent::Fire()
+{
+	if (bCanFire)
+	{
+		ServerFire(HitTarget);
 
 		if (EquippedWeapon)
 		{
 			CrosshairShootFactor = 0.75f;
 		}
+
+		StartFireTimer();
 	}
 }
 
+void UCombatComponent::StartFireTimer()
+{
+	if (!EquippedWeapon || !Character)
+	{
+		return;
+	}
+
+	bCanFire = false;
+
+	Character->GetWorldTimerManager().SetTimer(
+		FireTimer,
+		this,
+		&UCombatComponent::FireTimerFinished,
+		EquippedWeapon->FireDelay
+	);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	bCanFire = true;
+
+	// Fire again if we're still holding down the fire button
+	if (bFireButtonPressed && EquippedWeapon->bIsAutomatic)
+	{
+		Fire();
+	}
+}
 
 // When a client calls this server RPC, the server will execute its multicast
 // RPC which will replicate the fire routines back down to the clients
@@ -254,7 +284,7 @@ void UCombatComponent::ServerFire_Implementation(
 void UCombatComponent::MulticastFire_Implementation(
 	const FVector_NetQuantize& TraceHitTarget)
 {
-	if (!EquippedWeapon)
+	if (EquippedWeapon == nullptr)
 	{
 		return;
 	}
@@ -377,4 +407,13 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (Character && EquippedWeapon)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }

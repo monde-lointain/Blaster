@@ -98,7 +98,13 @@ private:
 		meta = (AllowPrivateAccess = true))
 	FRotator RightHandRotation;
 
+	/** Indicates whether a character is locally controlled bone or not */
 	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bLocallyControlled;
+
+	/** Indicates whether a character should rotate its root bone or not */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bShouldRotateRootBone;
 };

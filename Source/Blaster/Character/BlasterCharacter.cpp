@@ -74,8 +74,42 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimOffset(DeltaTime);
+	// Handling rotation for characters. Local players will use rotate root bone
+	// with turning in place animations, where simulated proxies will use
+	// simplified rotation
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+
+		// For simulated proxies, make sure to call OnRep_ReplicatedMovement
+		// after an interval if the player hasn't moved, since the function is
+		// normally only called when a player moves
+		const float MaxMovementReplicationInterval = 0.25;
+
+		if (TimeSinceLastMovementReplication > MaxMovementReplicationInterval)
+		{
+			OnRep_ReplicatedMovement();
+		}
+
+		// Calculate the pitch every frame still
+		CalculateAO_Pitch();
+	}
+
 	HideCameraIfCharacterIsClose();
+}
+
+void ABlasterCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+
+	// We're calling this here, because we only want to calculate the rotation
+	// for every net update, instead of every frame
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.0f;
 }
 
 // Called when the game starts or when spawned
@@ -281,15 +315,14 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		return;
 	}
 
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.0f;
-	float Speed = Velocity.Size();
-
+	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
 	// If we're standing still and not jumping
 	if (Speed == 0.f && !bIsInAir)
 	{
+		bShouldRotateRootBone = true;
+
 		FRotator CurrentAimRotation =
 			FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = UKismetMathLibrary::NormalizedDeltaRotator(
@@ -310,6 +343,8 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	// If we're running or jumping
 	if (Speed > 0.0f || bIsInAir)
 	{
+		bShouldRotateRootBone = false;
+
 		StartingAimRotation = FRotator(0.0f, GetBaseAimRotation().Yaw, 0.0f);
 		AO_Yaw = 0.0f;
 
@@ -318,6 +353,21 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
+	CalculateAO_Pitch();
+
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(
+	//		0,
+	//		15.0f,
+	//		FColor::Green,
+	//		FString::Printf(TEXT("AO_Yaw: %f\nAO_Pitch: %f"), AO_Yaw, AO_Pitch)
+	//	);
+	//}
+}
+
+void ABlasterCharacter::CalculateAO_Pitch()
+{
 	// We can set the pitch regardless if we're running or jumping
 	AO_Pitch = GetBaseAimRotation().Pitch;
 
@@ -330,16 +380,62 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		AO_Pitch =
 			FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
+}
 
-	//if (GEngine)
-	//{
-	//	GEngine->AddOnScreenDebugMessage(
-	//		0,
-	//		15.0f,
-	//		FColor::Green,
-	//		FString::Printf(TEXT("AO_Yaw: %f\nAO_Pitch: %f"), AO_Yaw, AO_Pitch)
-	//	);
-	//}
+void ABlasterCharacter::SimProxiesTurn()
+{
+	if (!Combat || !Combat->EquippedWeapon)
+	{
+		return;
+	}
+
+	// Don't rotate root bones for simulated proxies as they don't update every
+	// frame, which causes the rotation to look jittery
+	bShouldRotateRootBone = false;
+
+	// If we're running, set turning to none and return early so we can end the
+	// turning animation
+	float Speed = CalculateSpeed();
+
+	if (Speed > 0.0f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
+	// Calculate the difference in yaw rotation between the last and current
+	// frame
+	ProxyRotationSinceLastFrame = ProxyRotationCurrentFrame;
+	ProxyRotationCurrentFrame = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(
+		ProxyRotationCurrentFrame, ProxyRotationSinceLastFrame)
+				   .Yaw;
+
+	UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
+
+	// Turn in place if we've rotated above the required amount
+	if (FMath::Abs(ProxyYaw) > TurnInPlaceThreshold)
+	{
+		// Turning right
+		if (ProxyYaw > TurnInPlaceThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Right;
+		}
+		// Turning left
+		else if (ProxyYaw < -TurnInPlaceThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Left;
+		}
+		else
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		}
+
+		return;
+	}
+
+	// If we're not turning
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 }
 
 void ABlasterCharacter::Jump()
@@ -425,6 +521,15 @@ void ABlasterCharacter::HideCameraIfCharacterIsClose()
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+float ABlasterCharacter::CalculateSpeed()
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.0f;
+	float Speed = Velocity.Size();
+
+	return Speed;
 }
 
 // NOTE: This function is only called on the server. We'll use server

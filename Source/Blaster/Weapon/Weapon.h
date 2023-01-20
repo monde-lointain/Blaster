@@ -69,6 +69,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.0f;
 
+	/** Interval between shots for automatic weapons */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float FireDelay = 0.15f;
+
+	/** Indicates whether a weapon is automatic or not */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bIsAutomatic = true;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
