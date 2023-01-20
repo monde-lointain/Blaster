@@ -108,5 +108,63 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		// Apply a correction rotation to the right hand bone for the local
+		// player so they can see their gun pointed in the right direction
+		if (BlasterCharacter->IsLocallyControlled())
+		{
+			bLocallyControlled = true;
+
+			FVector RightHandTransformLocation =
+				EquippedWeapon->GetWeaponMesh()
+				->GetSocketTransform(FName("Hand_R"),
+					ERelativeTransformSpace::RTS_World)
+				.GetLocation();
+
+			// Since the x axis of the right hand points in the opposite direction
+			// of the gun, we will get the rotation in the opposite direction by
+			// using a vector going backwards in the opposite direction of the hit
+			// target
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(
+				RightHandTransformLocation,
+				RightHandTransformLocation + (RightHandTransformLocation
+					                          - BlasterCharacter->GetHitTarget())
+			);
+
+			// Smooth out the rotation
+			RightHandRotation = FMath::RInterpTo(
+				RightHandRotation, LookAtRotation, DeltaTime, 30.f);
+
+			//UE_LOG(LogTemp, Warning, TEXT("RightHandRotation: %s"),
+			//	*RightHandRotation.ToString());
+		}
+
+		///** Debug lines */
+
+		//FTransform MuzzleTipTransform =
+		//	EquippedWeapon->GetWeaponMesh()->GetSocketTransform(
+		//		FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
+
+		//// Get the direction of the x-axis corresponding to the rotation of the
+		//// muzzle tip socket
+		//FVector MuzzleX(
+		//	FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator())
+		//		.GetUnitAxis(EAxis::X));
+
+		//// Debug line drawn along the direction of the muzzle tip
+		//DrawDebugLine(
+		//	GetWorld(), 
+		//	MuzzleTipTransform.GetLocation(),
+		//	MuzzleTipTransform.GetLocation() + (MuzzleX * 1000.0f),
+		//	FColor::Red
+		//);
+
+		//// Debug line drawn from the muzzle tip to the hit target
+		//DrawDebugLine(
+		//	GetWorld(),
+		//	MuzzleTipTransform.GetLocation(),
+		//	BlasterCharacter->GetHitTarget(),
+		//	FColor::Cyan
+		//);
 	}
 }

@@ -10,6 +10,8 @@
 class USphereComponent;
 class UWidgetComponent;
 class UAnimationAsset;
+class ABulletShell;
+class UTexture2D;
 
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
@@ -41,7 +43,31 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 
 	/** Handles elements of firing assigned to the weapon */
-	virtual void Fire(const FVector &HitTarget);
+	virtual void Fire(const FVector& HitTarget);
+
+	/** Textures for the weapon crosshairs */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsCenter;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsLeft;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsRight;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsTop;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsBottom;
+
+	/** Zoomed FOV while aiming */
+	UPROPERTY(EditAnywhere)
+	float ZoomedFOV = 30.0f;
+
+	/** Interpolation speed for the aim zoom */
+	UPROPERTY(EditAnywhere)
+	float ZoomInterpSpeed = 20.0f;
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -85,6 +111,10 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UWidgetComponent* PickupWidget;
 
+	/** Class used for the bullet shell casing the weapon spawns */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABulletShell> BulletShellClass;
+
 public:
 	/** Handles changes in the weapon state for the server */
 	void SetWeaponState(EWeaponState State);
@@ -101,4 +131,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = WeaponProperties)
 	UAnimationAsset* FireAnimation;
+
+	FORCEINLINE float GetZoomedFOV() const
+	{
+		return ZoomedFOV;
+	}
+
+	FORCEINLINE float GetZoomInterpSpeed() const
+	{
+		return ZoomInterpSpeed;
+	}
 };

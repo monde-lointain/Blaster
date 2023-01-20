@@ -8,6 +8,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Animation/AnimationAsset.h"
+#include "BulletShell.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -144,5 +146,31 @@ void AWeapon::Fire(const FVector& HitTarget)
 	if (FireAnimation)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
+
+	if (BulletShellClass)
+	{
+		// Get the socket to spawn the casing at
+		const USkeletalMeshSocket* CasingSocket =
+			WeaponMesh->GetSocketByName(FName("AmmoEject"));
+
+		if (CasingSocket)
+		{
+			// Get the location to spawn the casing at from the socket
+			FTransform SocketTransform =
+				CasingSocket->GetSocketTransform(WeaponMesh);
+
+			// Spawn the projectile at the target location
+			UWorld* World = GetWorld();
+
+			if (World)
+			{
+				World->SpawnActor<ABulletShell>(
+					BulletShellClass,
+					SocketTransform.GetLocation(),
+					SocketTransform.GetRotation().Rotator()
+					);
+			}
+		}
 	}
 }

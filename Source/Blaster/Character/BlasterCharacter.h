@@ -2,9 +2,10 @@
 
 #pragma once
 
+#include "Blaster/BlasterTypes/TurningInPlace.h"
+#include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Blaster/BlasterTypes/TurningInPlace.h"
 
 #include "BlasterCharacter.generated.h"
 
@@ -16,7 +17,8 @@ class UCombatComponent;
 class UAnimMontage;
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : public ACharacter,
+									  public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -103,6 +105,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
 
+	void HideCameraIfCharacterIsClose();
+
+	/** Minimum distance from the player to the camera before hiding them */
+	UPROPERTY(EditAnywhere)
+	float HideCharacterDistance = 200.0f;
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -123,5 +131,12 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const
 	{
 		return TurningInPlace;
+	}
+
+	FVector GetHitTarget() const;
+
+	FORCEINLINE UCameraComponent* GetFollowCamera() const
+	{
+		return FollowCamera;
 	}
 };

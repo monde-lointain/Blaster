@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Blaster/HUD/BlasterHUD.h"
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 
@@ -9,6 +10,8 @@
 
 class AWeapon;
 class ABlasterCharacter;
+class ABlasterPlayerController;
+class ABlasterHUD;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -67,8 +70,15 @@ protected:
 	/** Performs a line trace starting from the center of the screen */
 	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	/** Sets the textures for the HUD crosshairs */
+	void SetHUDCrosshairs(float DeltaTime);
+
 private:
 	ABlasterCharacter* Character;
+
+	ABlasterPlayerController* Controller;
+
+	ABlasterHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
@@ -91,4 +101,52 @@ private:
 
 	/** Indicates whether the fire buton has been pressed or not. */
 	bool bFireButtonPressed;
+
+	/**
+	 * Factor for how calculating how much the player's HUD crosshairs should be
+	 * spread based on their velocity
+	 */
+	float CrosshairVelocityFactor;
+
+	/**
+	 * Factor for how calculating how much the player's HUD crosshairs should be
+	 * spread when in the air
+	 */
+	float CrosshairInAirFactor;
+
+	/**
+	 * Factor for how calculating how much the player's HUD crosshairs should
+	 * contract when aiming
+	 */
+	float CrosshairAimFactor;
+
+	/**
+	 * Factor for how calculating how much the player's HUD crosshairs should
+	 * spread when shooting
+	 */
+	float CrosshairShootFactor;
+
+	/** Impact point calculated from the line trace in TraceUnderCrosshairs */
+	FVector HitTarget;
+
+	/** Parameters for the player HUD */
+	FHUDPackage HUDPackage;
+
+	/**
+	 * Field of view when not aiming; set to the camera's base FOV in BeginPlay
+	 */
+	float DefaultFOV;
+
+	/** Field of view when zoomed */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float ZoomedFOV = 30.0f;
+
+	float CurrentFOV;
+
+	/** Interpolation speed for the aim zoom */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float ZoomInterpSpeed = 20.0f;
+
+	/** Interpolates FOV when aiming */
+	void InterpFOV(float DeltaTime);
 };

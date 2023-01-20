@@ -47,6 +47,8 @@ ABlasterCharacter::ABlasterCharacter()
 		ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(
+		ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 600.0f);
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
@@ -71,6 +73,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AimOffset(DeltaTime);
+	HideCameraIfCharacterIsClose();
 }
 
 // Called when the game starts or when spawned
@@ -361,7 +364,44 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-// NOTE: This function is only called for the server. We'll use server
+void ABlasterCharacter::HideCameraIfCharacterIsClose()
+{
+	// Local players only
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
+	float CharacterDistanceFromCamera =
+		(FollowCamera->GetComponentLocation() - GetActorLocation()).Size();
+
+	if (CharacterDistanceFromCamera < HideCharacterDistance)
+	{
+		GetMesh()->SetVisibility(false);
+
+		// Disable visibility on the weapon mesh only for the owner
+		if (Combat && 
+			Combat->EquippedWeapon &&
+			Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		GetMesh()->SetVisibility(true);
+
+		// Disable visibility on the weapon mesh only for the owner
+		if (Combat &&
+			Combat->EquippedWeapon &&
+			Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
+// NOTE: This function is only called on the server. We'll use server
 // replication with OnRep_OverlappingWeapon to relay the weapon info to the
 // clients.
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -421,4 +461,14 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon()
 	}
 
 	return Combat->EquippedWeapon;
+}
+
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	if (!Combat)
+	{
+		return FVector();
+	}
+
+	return Combat->HitTarget;
 }

@@ -11,6 +11,7 @@ class UBoxComponent;
 class UProjectileMovementComponent;
 class UParticleSystem;
 class UParticleSystemComponent;
+class USoundCue;
 
 UCLASS()
 class BLASTER_API AProjectile : public AActor
@@ -18,12 +19,27 @@ class BLASTER_API AProjectile : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
+	/** Sets default values for this actor's properties */
 	AProjectile();
+
+	/** Called every frame */
+	virtual void Tick(float DeltaTime) override;
+
+	/**
+	 * Called when the actor has been destroyed. Gets replicated down to
+	 * clients when executed on the server.
+	 */
+	virtual void Destroyed() override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	/** Handles the projectile's behavior on impact */
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
+		const FHitResult& HitResult);
 
 private:
 	/** The collision bounding box for the projectile */
@@ -41,7 +57,11 @@ private:
 	/** Component to store the tracer in once spawned */
 	UParticleSystemComponent* TracerComponent;
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	/** Particles that play upon projectile impact */
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ImpactParticles;
+
+	/** Sound that plays upon projectile impact */
+	UPROPERTY(EditAnywhere)
+	USoundCue* ImpactSound;
 };

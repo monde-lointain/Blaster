@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Animation/AnimInstance.h"
-#include "CoreMinimal.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
+#include "CoreMinimal.h"
 
 #include "BlasterAnimInstance.generated.h"
 
@@ -28,39 +28,39 @@ private:
 		meta = (AllowPrivateAccess = true))
 	ABlasterCharacter* BlasterCharacter;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	float Speed;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bIsInAir;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bIsAccelerating;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bWeaponEquipped;
 
 	AWeapon* EquippedWeapon;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bIsCrouched;
 
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bIsAiming;
 
 	/** Drives the x axis of the leaning and strafing blendspace */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	float YawOffset;
 
 	/** Drives the y axis of the leaning and strafing blendspace */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	float Lean;
 
@@ -71,22 +71,34 @@ private:
 	FRotator DeltaRotation;
 
 	/** Drives the yaw of the aim offset */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	float AO_Yaw;
 
 	/** Drives the pitch of the aim offset */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	float AO_Pitch;
 
 	/** Used for placing the left hand on the weapon via FABRIK */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	FTransform LeftHandTransform;
 
 	/** Indicates the player's current turning in place state */
-	UPROPERTY(BlueprintReadOnly, Category = Character,
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	ETurningInPlace TurningInPlace;
+
+	/**
+	 * Rotation of the player's right hand. Used for correcting the aim offsets
+	 * to point the weapon in the right direction
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	FRotator RightHandRotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bLocallyControlled;
 };
