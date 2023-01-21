@@ -45,9 +45,10 @@ public:
 	 */
 	virtual void PostInitializeComponents() override;
 
-	/** Handles playing montages for a player firing weapons and getting hit */
+	/** These handle playing various animation montages for the player */
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
+	void PlayElimMontage();
 
 	/** Overridden to handle movement replication for simulated proxies */
 	virtual void OnRep_ReplicatedMovement() override;
@@ -61,7 +62,8 @@ public:
 	/** Updates the HUD health widget of the player after taking damage */
 	void UpdateHUDHealth();
 
-	/** Handles what happens to the player upon elimination */
+	/** Multicast RPC for replicating player elimination */
+	UFUNCTION(NetMulticast, Reliable)
 	void Eliminated();
 
 protected:
@@ -134,6 +136,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
 
+	/** Animation montage for getting eliminated */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ElimMontage;
+
 	void HideCameraIfCharacterIsClose();
 
 	/** Minimum distance from the player to the camera before hiding them */
@@ -169,6 +175,9 @@ private:
 	/** The player's maximum health */
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	float MaxHealth = 100.0f;
+
+	/** Indicates whether the player has been eliminated or not */
+	bool bIsEliminated = false;
 
 	/** Replication notify for health */
 	UFUNCTION()
@@ -212,5 +221,10 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone() const
 	{
 		return bShouldRotateRootBone;
+	}
+
+	FORCEINLINE bool IsEliminated() const
+	{
+		return bIsEliminated;
 	}
 };

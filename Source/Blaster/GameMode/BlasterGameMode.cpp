@@ -10,4 +10,9 @@ void ABlasterGameMode::PlayerEliminated(
 	ABlasterPlayerController* EliminatedController,
 	ABlasterPlayerController* AttackerController)
 {
+	if (EliminatedCharacter)
+	{
+		// Play the eliminated animation montage
+		EliminatedCharacter->Eliminated();
+	}
 }

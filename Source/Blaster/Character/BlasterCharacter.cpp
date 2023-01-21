@@ -163,8 +163,10 @@ void ABlasterCharacter::UpdateHUDHealth()
 	}
 }
 
-void ABlasterCharacter::Eliminated()
+void ABlasterCharacter::Eliminated_Implementation()
 {
+	bIsEliminated = true;
+	PlayElimMontage();
 }
 
 // Called when the game starts or when spawned
@@ -259,6 +261,16 @@ void ABlasterCharacter::PlayHitReactMontage()
 
 		FName SectionName = FName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
 	}
 }
 

@@ -107,4 +107,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bShouldRotateRootBone;
+
+	/** Indicates whether a character is eliminated or not */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bIsEliminated;
 };
