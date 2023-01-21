@@ -64,9 +64,11 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Register the weapon class to be replicated by the server
+	// Notify the server that we want to replicate the player's weapon class and
+	// current health
 	DOREPLIFETIME_CONDITION(
 		ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, CurrentHealth);
 }
 
 // Called every frame
@@ -530,6 +532,10 @@ float ABlasterCharacter::CalculateSpeed()
 	float Speed = Velocity.Size();
 
 	return Speed;
+}
+
+void ABlasterCharacter::OnRep_Health()
+{
 }
 
 // NOTE: This function is only called on the server. We'll use server

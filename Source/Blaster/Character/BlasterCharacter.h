@@ -152,6 +152,18 @@ private:
 
 	float CalculateSpeed();
 
+	/** The player's current health */
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category = PlayerStats)
+	float CurrentHealth = 100.0f;
+
+	/** The player's maximum health */
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	float MaxHealth = 100.0f;
+
+	/** Replication notify for health */
+	UFUNCTION()
+	void OnRep_Health();
+
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
