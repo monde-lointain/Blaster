@@ -15,6 +15,7 @@ class UWidgetComponent;
 class AWeapon;
 class UCombatComponent;
 class UAnimMontage;
+class ABlasterPlayerController;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter,
@@ -163,6 +164,12 @@ private:
 	/** Replication notify for health */
 	UFUNCTION()
 	void OnRep_Health();
+
+	/**
+	 * Represents the controller the player is currently using. Used for
+	 * accessing the HUD in the character class
+	 */
+	ABlasterPlayerController* BlasterPlayerController;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
