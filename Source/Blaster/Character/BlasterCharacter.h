@@ -61,6 +61,9 @@ public:
 	/** Updates the HUD health widget of the player after taking damage */
 	void UpdateHUDHealth();
 
+	/** Handles what happens to the player upon elimination */
+	void Eliminated();
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;

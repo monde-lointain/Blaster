@@ -4,6 +4,7 @@
 
 #include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
@@ -115,11 +116,38 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.0f;
 }
 
-void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage,
+	const UDamageType* DamageType, AController* InstigatorController,
+	AActor* DamageCauser)
 {
 	CurrentHealth = FMath::Clamp(CurrentHealth - Damage, 0.0f, MaxHealth);
 	PlayHitReactMontage();
 	UpdateHUDHealth();
+
+	if (CurrentHealth == 0.0f)
+	{
+		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+
+		if (BlasterGameMode)
+		{
+			// Only cast to the player controller if we don't have it already
+			// yet for some reason
+			if (!BlasterPlayerController)
+			{
+				BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+			}
+
+			// Cast the attacker's controller to our custom player controller
+			// class as well
+			ABlasterPlayerController* AttackerController =
+				Cast<ABlasterPlayerController>(InstigatorController);
+
+			// We'll check to make sure all the controllers are valid in the
+			// game mode
+			BlasterGameMode->PlayerEliminated(
+				this, BlasterPlayerController, AttackerController);
+		}
+	}
 }
 
 void ABlasterCharacter::UpdateHUDHealth()
@@ -133,6 +161,10 @@ void ABlasterCharacter::UpdateHUDHealth()
 	{
 		BlasterPlayerController->SetHUDHealth(CurrentHealth, MaxHealth);
 	}
+}
+
+void ABlasterCharacter::Eliminated()
+{
 }
 
 // Called when the game starts or when spawned

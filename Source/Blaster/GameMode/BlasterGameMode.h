@@ -7,6 +7,9 @@
 
 #include "BlasterGameMode.generated.h"
 
+class ABlasterCharacter;
+class ABlasterPlayerController;
+
 /**
  *
  */
@@ -16,4 +19,9 @@ class BLASTER_API ABlasterGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
+	virtual void PlayerEliminated(
+		ABlasterCharacter* EliminatedCharacter,
+		ABlasterPlayerController* EliminatedController,
+		ABlasterPlayerController* AttackerController
+	);
 };
