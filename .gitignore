@@ -12,15 +12,4 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
-/Build/windows_indev_v1.0.7z
-/Build/windows_indev_v1.1.7z
-/Build/Windows/Blaster/Content/Paks/global.utoc
-/Build/Windows/Blaster/Content/Paks/global.ucas
-/Build/Windows/Blaster/Content/Paks/Blaster-Windows.utoc
-/Build/Windows/Blaster/Content/Paks/Blaster-Windows.ucas
-/Build/Windows/Blaster/Content/Paks/Blaster-Windows.pak
-/Build/Windows/Manifest_UFSFiles_Win64.txt
-/Build/Windows/Manifest_NonUFSFiles_Win64.txt
-/Build/Windows/FileOpenOrder/EditorOpenOrder.log
-/Build/Windows/FileOpenOrder/CookerOpenOrder.log
-/Build/Windows
+/Build
