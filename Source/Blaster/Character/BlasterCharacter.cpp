@@ -115,15 +115,40 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.0f;
 }
 
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	CurrentHealth = FMath::Clamp(CurrentHealth - Damage, 0.0f, MaxHealth);
+	PlayHitReactMontage();
+	UpdateHUDHealth();
+}
+
+void ABlasterCharacter::UpdateHUDHealth()
+{
+	if (!BlasterPlayerController)
+	{
+		BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+	}
+
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(CurrentHealth, MaxHealth);
+	}
+}
+
 // Called when the game starts or when spawned
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Initialize the healthbar on the player's HUD
 	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
-	if (BlasterPlayerController)
+	UpdateHUDHealth();
+
+	// We only want damage to be handled by the server, so we're binding the
+	// callback ReceiveDamage only if we're the server
+	if (HasAuthority())
 	{
-		BlasterPlayerController->SetHUDHealth(CurrentHealth, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
 }
 
@@ -490,11 +515,6 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void ABlasterCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-}
-
 void ABlasterCharacter::HideCameraIfCharacterIsClose()
 {
 	// Local players only
@@ -543,6 +563,8 @@ float ABlasterCharacter::CalculateSpeed()
 
 void ABlasterCharacter::OnRep_Health()
 {
+	PlayHitReactMontage();
+	UpdateHUDHealth();
 }
 
 // NOTE: This function is only called on the server. We'll use server

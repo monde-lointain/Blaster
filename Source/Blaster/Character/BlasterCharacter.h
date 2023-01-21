@@ -16,6 +16,7 @@ class AWeapon;
 class UCombatComponent;
 class UAnimMontage;
 class ABlasterPlayerController;
+class AController;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter,
@@ -48,12 +49,17 @@ public:
 	void PlayFireMontage(bool bAiming);
 	void PlayHitReactMontage();
 
-	/** Server RPC for replicating hits */
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
-
 	/** Overridden to handle movement replication for simulated proxies */
 	virtual void OnRep_ReplicatedMovement() override;
+
+	/** Handles damage taken events for the player */
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage,
+		const UDamageType* DamageType, AController* InstigatorController,
+		AActor* DamageCauser);
+
+	/** Updates the HUD health widget of the player after taking damage */
+	void UpdateHUDHealth();
 
 protected:
 	/** Called when the game starts or when spawned */

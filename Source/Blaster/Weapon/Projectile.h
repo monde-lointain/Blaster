@@ -41,6 +41,10 @@ protected:
 		UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
 		const FHitResult& HitResult);
 
+	/** Damage done by the projectile */
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.0f;
+
 private:
 	/** The collision bounding box for the projectile */
 	UPROPERTY(EditAnywhere)
