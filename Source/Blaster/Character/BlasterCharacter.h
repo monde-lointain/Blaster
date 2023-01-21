@@ -62,9 +62,12 @@ public:
 	/** Updates the HUD health widget of the player after taking damage */
 	void UpdateHUDHealth();
 
-	/** Multicast RPC for replicating player elimination */
-	UFUNCTION(NetMulticast, Reliable)
+	/** Server call for handling player elimination */
 	void Eliminated();
+
+	/** Multicast RPC for handling player elimination */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminated();
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -188,6 +191,16 @@ private:
 	 * accessing the HUD in the character class
 	 */
 	ABlasterPlayerController* BlasterPlayerController;
+
+	/** Handle to the player respawn timer */
+	FTimerHandle ElimTimer;
+
+	/** Respawn timer length */
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.0f;
+
+	/** Callback function for the player eliminated timer */
+	void ElimTimerFinished();
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

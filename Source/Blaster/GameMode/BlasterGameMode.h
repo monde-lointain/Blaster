@@ -19,9 +19,13 @@ class BLASTER_API ABlasterGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
+	/** The game mode handling function for player elimination */
 	virtual void PlayerEliminated(
 		ABlasterCharacter* EliminatedCharacter,
 		ABlasterPlayerController* EliminatedController,
 		ABlasterPlayerController* AttackerController
 	);
+
+	virtual void RequestRespawn(
+		ACharacter* EliminatedCharacter, AController* EliminatedController);
 };

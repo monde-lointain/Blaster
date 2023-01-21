@@ -23,40 +23,58 @@ ABlasterCharacter::ABlasterCharacter()
 	// improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Initialize the spring arm component for the camera
 	CameraBoom =
 		CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
 	CameraBoom->TargetArmLength = 600.0f;
 	CameraBoom->bUsePawnControlRotation = true;
 
+	// Initialize the camera component
 	FollowCamera =
 		CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-
+	// Initialize the overhead widget displaying the player's name and their net
+	// role
 	OverheadWidget =
 		CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
+	// Initialize the combat component
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
 
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	// Enable crouching
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
+	// Set the collision properties for the capsule component
 	GetCapsuleComponent()->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+	// Set the collision properties for the character mesh
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+
+	// Set the amount the character can rotate when moving
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 600.0f);
 
+	// Initialize the character's turning in place state
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 
+	// Set this so we can make sure the actor always spawns even if there aren't
+	// enough spawn points
+	SpawnCollisionHandlingMethod =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	// Set the net update frequency for the character
 	NetUpdateFrequency = 66.0f;
 	MinNetUpdateFrequency = 33.0f;
 }
@@ -163,10 +181,36 @@ void ABlasterCharacter::UpdateHUDHealth()
 	}
 }
 
-void ABlasterCharacter::Eliminated_Implementation()
+void ABlasterCharacter::Eliminated()
+{
+	// Call the multicast RPC to replicate the player's elimination
+	MulticastEliminated();
+
+	// Start the respawn timer
+	GetWorldTimerManager().SetTimer(
+		ElimTimer, 
+		this, 
+		&ABlasterCharacter::ElimTimerFinished, 
+		ElimDelay
+	);
+}
+
+void ABlasterCharacter::MulticastEliminated_Implementation()
 {
 	bIsEliminated = true;
 	PlayElimMontage();
+}
+
+void ABlasterCharacter::ElimTimerFinished()
+{
+	ABlasterGameMode* BlasterGameMode =
+		GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+
+	// Respawn the player upon timer finish
+	if (BlasterGameMode)
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 // Called when the game starts or when spawned
