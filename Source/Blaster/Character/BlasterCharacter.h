@@ -5,6 +5,7 @@
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "CoreMinimal.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 
 #include "BlasterCharacter.generated.h"
@@ -201,6 +202,42 @@ private:
 
 	/** Callback function for the player eliminated timer */
 	void ElimTimerFinished();
+
+	/**
+	 * Material instance used for the dissolve effect on the character upon
+	 * elimination. We'll set this in our character blueprint to determine what
+	 * material gets applied to our character upon elimination
+	 */
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* DissolveMaterialInstance;
+
+	/**
+	 * Dynamic instance of our dissolve material that we can change at runtime
+	 * to apply the dissolve effect to the character
+	 */
+	UPROPERTY(VisibleAnywhere, Category = Elimination)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	/** Dissolve effect timeline */
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+
+	/** Track for the dissolve effect timeline */
+	FOnTimelineFloat DissolveTrack;
+
+	/** Curve for the dissolve effect timeline */
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	/**
+	 * Starts the dissolve timeline and binds the dissolve callback funtion for
+	 * the dissolve track
+	 */
+	void StartDissolve();
+
+	/** Updates the dissolve timeline each frame */
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);

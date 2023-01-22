@@ -46,6 +46,10 @@ ABlasterCharacter::ABlasterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
 
+	// Initialize the timeline component for the dissolve effect
+	DissolveTimeline =
+		CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimeline"));
+
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -199,6 +203,23 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 {
 	bIsEliminated = true;
 	PlayElimMontage();
+
+	// Create a dynamic material instance of the dissolve material to be used to
+	// apply the dissolve effect to the character
+	if (DissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance =
+			UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+
+		// Set the starting values for the dynamic material instance
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(
+			TEXT("Dissolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(
+			TEXT("Glow"), 200.0f);
+	}
+
+	StartDissolve();
 }
 
 void ABlasterCharacter::ElimTimerFinished()
@@ -653,6 +674,28 @@ void ABlasterCharacter::OnRep_Health()
 {
 	PlayHitReactMontage();
 	UpdateHUDHealth();
+}
+
+void ABlasterCharacter::StartDissolve()
+{
+	// Bind the callback function for the dissolve track to call every frame
+	DissolveTrack.BindDynamic(this, &ABlasterCharacter::UpdateDissolveMaterial);
+
+	// Add the curve for the dissolve timeline and start playing it
+	if (DissolveCurve && DissolveTimeline)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
+	}
+}
+
+void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	if (DynamicDissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(
+			TEXT("Dissolve"), DissolveValue);
+	}
 }
 
 // NOTE: This function is only called on the server. We'll use server
