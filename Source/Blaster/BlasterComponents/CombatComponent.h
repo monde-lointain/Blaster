@@ -83,10 +83,16 @@ protected:
 	void SetHUDCrosshairs(float DeltaTime);
 
 private:
+	/** The character using this component */
+	UPROPERTY()
 	ABlasterCharacter* Character;
 
+	/** The player controller using this component */
+	UPROPERTY()
 	ABlasterPlayerController* Controller;
 
+	/** The HUD used by the player using this component */
+	UPROPERTY()
 	ABlasterHUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)

@@ -77,3 +77,24 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 			FText::FromString(ScoreText));
 	}
 }
+
+void ABlasterPlayerController::SetHUDElimCounter(int32 ElimCount)
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+
+	bool bHUDIsValid = BlasterHUD &&
+		               BlasterHUD->CharacterOverlay &&
+		               BlasterHUD->CharacterOverlay->ElimCounter;
+
+	if (bHUDIsValid)
+	{
+		// Display the player's current elim count
+		FString ElimCountText = FString::Printf(TEXT("%d"), ElimCount);
+		BlasterHUD->CharacterOverlay->ElimCounter->SetText(
+			FText::FromString(ElimCountText));
+	}
+}

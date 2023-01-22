@@ -24,6 +24,9 @@ public:
 	/** Updates the score counter on the HUD widget */
 	void SetHUDScore(float Score);
 
+	/** Updates the score counter on the HUD widget */
+	void SetHUDElimCounter(int32 ElimCount);
+
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -33,5 +36,6 @@ protected:
 
 private:
 	/** Represents the HUD for the character */
+	UPROPERTY()
 	ABlasterHUD* BlasterHUD;
 };

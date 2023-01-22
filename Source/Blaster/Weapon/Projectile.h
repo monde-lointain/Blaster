@@ -59,6 +59,7 @@ private:
 	UParticleSystem* Tracer;
 
 	/** Component to store the tracer in once spawned */
+	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
 
 	/** Particles that play upon projectile impact */

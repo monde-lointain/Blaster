@@ -30,4 +30,8 @@ public:
 	/** Player score counter text widget */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreCounter;
+
+	/** Player elimination counter text widget */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ElimCounter;
 };

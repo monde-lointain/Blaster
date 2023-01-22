@@ -30,6 +30,12 @@ void ABlasterGameMode::PlayerEliminated(
 		AttackerPlayerState->AddToScore(1.0f);
 	}
 
+	// Increment the eliminated player's elim count
+	if (EliminatedPlayerState)
+	{
+		EliminatedPlayerState->AddToElimCount(1);
+	}
+
 	if (EliminatedCharacter)
 	{
 		// Notify the server to eliminate the character. The server will call
