@@ -18,6 +18,7 @@ class UCombatComponent;
 class UAnimMontage;
 class ABlasterPlayerController;
 class AController;
+class USoundCue;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter,
@@ -69,6 +70,12 @@ public:
 	/** Multicast RPC for handling player elimination */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminated();
+
+	/**
+	 * Overridden to handle things that need to be replicated for clients and
+	 * the server upon character destruction
+	 */
+	virtual void Destroyed() override;
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -238,6 +245,18 @@ private:
 	/** Updates the dissolve timeline each frame */
 	UFUNCTION()
 	void UpdateDissolveMaterial(float DissolveValue);
+
+	/** Particle system for bot that appears above player on elimination */
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	/** Component for storing the elim bot particle system */
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	/** Sound played when spawning the elimbot */
+	UPROPERTY(EditAnywhere)
+	USoundCue* ElimBotSound;
 
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
