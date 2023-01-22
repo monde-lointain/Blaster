@@ -50,6 +50,13 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	/**
+	 * Sets the weapon state and attaches the weapon to the character's right
+	 * hand socket. Called on both server and clients to ensure that the physics
+	 * properties are always correct when equipping a weapon
+	 */
+	void UpdateWeaponStateAndAttach();
+
 	/** Called whenever a player presses the fire button. */
 	void FireButtonPressed(bool bPressed);
 

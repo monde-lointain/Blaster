@@ -45,6 +45,9 @@ public:
 	/** Handles elements of firing assigned to the weapon */
 	virtual void Fire(const FVector& HitTarget);
 
+	/** Handles dropping the weapon */
+	void Dropped();
+
 	/** Textures for the weapon crosshairs */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;
@@ -122,6 +125,9 @@ private:
 	/** Class used for the bullet shell casing the weapon spawns */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABulletShell> BulletShellClass;
+
+	/** Enables and disables physics for the weapon mesh */
+	void SetWeaponPhysicsEnabled(bool bPhysicsEnabled);
 
 public:
 	/** Handles changes in the weapon state for the server */

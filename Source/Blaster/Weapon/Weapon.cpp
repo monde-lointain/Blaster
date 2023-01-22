@@ -17,22 +17,28 @@ AWeapon::AWeapon()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
+	// Initialize the weapon mesh
 	WeaponMesh =
 		CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	SetRootComponent(WeaponMesh);
 
+	// Set the collision for the mesh
 	WeaponMesh->SetCollisionResponseToAllChannels(
 		ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Initialize the pickup sphere for the weapon
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
+
+	// Set collision for the pickup sphere
 	AreaSphere->SetCollisionResponseToAllChannels(
 		ECollisionResponse::ECR_Ignore);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Initialize the hover text that appears when overlapping the pickup sphere
 	PickupWidget =
 		CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	PickupWidget->SetupAttachment(RootComponent);
@@ -115,6 +121,21 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			// server because overlap events only occur on it
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+			// Disable physics on the weapon when the player equips it
+			SetWeaponPhysicsEnabled(false);
+			break;
+		}
+		case EWeaponState::EWS_Dropped:
+		{
+			// Make sure we only reenable collision on the server
+			if (HasAuthority())
+			{
+				AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			}
+
+			// Enable physics when the weapon gets dropped so we can see the
+			// weapon dropping and bouncing on the ground
+			SetWeaponPhysicsEnabled(true);
 			break;
 		}
 	}
@@ -128,8 +149,33 @@ void AWeapon::OnRep_WeaponState()
 		case EWeaponState::EWS_Equipped:
 		{
 			ShowPickupWidget(false);
+			// Disable physics on the weapon when the player equips it
+			SetWeaponPhysicsEnabled(false);
 			break;
 		}
+		case EWeaponState::EWS_Dropped:
+		{
+			// Enable physics when the weapon gets dropped so we can see the
+			// weapon dropping and bouncing on the ground
+			SetWeaponPhysicsEnabled(true);
+			break;
+		}
+	}
+}
+
+void AWeapon::SetWeaponPhysicsEnabled(bool bPhysicsEnabled)
+{
+	if (bPhysicsEnabled)
+	{
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	else
+	{
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -173,4 +219,16 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+
+	// Detach the weapon from the character
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+	WeaponMesh->DetachFromComponent(DetachRules);
+
+	// Clear the weapon's owner
+	SetOwner(nullptr);
 }

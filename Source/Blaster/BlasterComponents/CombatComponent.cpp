@@ -387,20 +387,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Replicated from server to clients
 	EquippedWeapon = WeaponToEquip;
 
-	// Set the weapon state for the server. Replicated to clients in
-	// AWeapon::OnRep_WeaponState (in Blaster/Weapon/Weapon.h)
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-
-	USkeletalMeshComponent* CharacterMesh = Character->GetMesh();
-	const USkeletalMeshSocket* HandSocket =
-		CharacterMesh->GetSocketByName("RightHandSocket");
-
-	// Attach the weapon to the player's right hand socket. Automatically
-	// propagated from server to clients
-	if (HandSocket)
-	{
-		HandSocket->AttachActor(EquippedWeapon, CharacterMesh);
-	}
+	UpdateWeaponStateAndAttach();
 
 	// Automatically replicated by the actor class method AActor::OnRep_Owner
 	EquippedWeapon->SetOwner(Character);
@@ -413,7 +400,29 @@ void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (Character && EquippedWeapon)
 	{
+		// The server automatically replicates the weapon state, but we're
+		// making sure to do it again here because if physics doesn't get
+		// disabled in time then the character won't be able to equip the weapon
+		UpdateWeaponStateAndAttach();
+
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+	}
+}
+
+// NOTE: Automatically propagated to clients when called on the server
+void UCombatComponent::UpdateWeaponStateAndAttach()
+{
+	// Update the weapon state
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+
+	// Attach the weapon to the player's right hand socket
+	USkeletalMeshComponent* CharacterMesh = Character->GetMesh();
+	const USkeletalMeshSocket* HandSocket =
+		CharacterMesh->GetSocketByName("RightHandSocket");
+
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(EquippedWeapon, CharacterMesh);
 	}
 }

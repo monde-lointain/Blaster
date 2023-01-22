@@ -187,6 +187,12 @@ void ABlasterCharacter::UpdateHUDHealth()
 
 void ABlasterCharacter::Eliminated()
 {
+	// Drop the weapon the player's holding if any
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	// Call the multicast RPC to replicate the player's elimination
 	MulticastEliminated();
 
@@ -219,7 +225,22 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 			TEXT("Glow"), 200.0f);
 	}
 
+	// Start the dissolve effect
 	StartDissolve();
+
+	// Disable movement for the character
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+
+	// Disable input
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+
+	// Disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::ElimTimerFinished()
