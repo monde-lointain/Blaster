@@ -606,7 +606,7 @@ void ABlasterCharacter::SimProxiesTurn()
 		ProxyRotationCurrentFrame, ProxyRotationSinceLastFrame)
 				   .Yaw;
 
-	UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
+	//UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
 
 	// Turn in place if we've rotated above the required amount
 	if (FMath::Abs(ProxyYaw) > TurnInPlaceThreshold)

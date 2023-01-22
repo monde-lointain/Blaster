@@ -61,6 +61,14 @@ public:
 		const UDamageType* DamageType, AController* InstigatorController,
 		AActor* DamageCauser);
 
+	/** The player's current health */
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category = PlayerStats)
+	float CurrentHealth = 100.0f;
+
+	/** The player's maximum health */
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	float MaxHealth = 100.0f;
+
 	/** Updates the HUD health widget of the player after taking damage */
 	void UpdateHUDHealth();
 
@@ -178,14 +186,6 @@ private:
 	float TimeSinceLastMovementReplication;
 
 	float CalculateSpeed();
-
-	/** The player's current health */
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category = PlayerStats)
-	float CurrentHealth = 100.0f;
-
-	/** The player's maximum health */
-	UPROPERTY(EditAnywhere, Category = PlayerStats)
-	float MaxHealth = 100.0f;
 
 	/** Indicates whether the player has been eliminated or not */
 	bool bIsEliminated = false;
