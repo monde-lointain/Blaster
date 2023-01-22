@@ -4,6 +4,7 @@
 
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -12,6 +13,23 @@ void ABlasterGameMode::PlayerEliminated(
 	ABlasterPlayerController* EliminatedController,
 	ABlasterPlayerController* AttackerController)
 {
+	// Get the player states for the attacker and the eliminated player
+	ABlasterPlayerState* AttackerPlayerState =
+		AttackerController
+			? Cast<ABlasterPlayerState>(AttackerController->PlayerState)
+			: nullptr;
+	ABlasterPlayerState* EliminatedPlayerState =
+		EliminatedController
+		? Cast<ABlasterPlayerState>(EliminatedController->PlayerState)
+		: nullptr;
+
+	// Increment the attacking player's score if they didn't eliminate
+	// themselves
+	if (AttackerPlayerState && AttackerPlayerState != EliminatedPlayerState)
+	{
+		AttackerPlayerState->AddToScore(1.0f);
+	}
+
 	if (EliminatedCharacter)
 	{
 		// Notify the server to eliminate the character. The server will call

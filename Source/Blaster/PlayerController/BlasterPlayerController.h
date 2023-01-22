@@ -18,8 +18,11 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	/** Sets the health for the HUD widget */
+	/** Updates the health bar on the HUD widget */
 	void SetHUDHealth(float CurrentHealth, float MaxHealth);
+
+	/** Updates the score counter on the HUD widget */
+	void SetHUDScore(float Score);
 
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;

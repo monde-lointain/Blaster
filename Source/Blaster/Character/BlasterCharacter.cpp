@@ -7,6 +7,7 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -129,6 +130,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	}
 
 	HideCameraIfCharacterIsClose();
+	PollInit();
 }
 
 void ABlasterCharacter::OnRep_ReplicatedMovement()
@@ -283,6 +285,22 @@ void ABlasterCharacter::Destroyed()
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
+	}
+}
+
+void ABlasterCharacter::PollInit()
+{
+	// If the player state isn't initialized, initialize it
+	if (!BlasterPlayerState)
+	{
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+
+		// Set the HUD widgets to their starting values once the player state
+		// has been initialized
+		if (BlasterPlayerState)
+		{
+			BlasterPlayerState->AddToScore(0.0f);
+		}
 	}
 }
 

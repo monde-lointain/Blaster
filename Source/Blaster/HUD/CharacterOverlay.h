@@ -26,4 +26,8 @@ public:
 	/** Player current health text widget */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* HealthText;
+
+	/** Player score counter text widget */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ScoreCounter;
 };

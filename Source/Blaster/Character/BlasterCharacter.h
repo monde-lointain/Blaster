@@ -17,6 +17,7 @@ class AWeapon;
 class UCombatComponent;
 class UAnimMontage;
 class ABlasterPlayerController;
+class ABlasterPlayerState;
 class AController;
 class USoundCue;
 
@@ -84,6 +85,12 @@ public:
 	 * the server upon character destruction
 	 */
 	virtual void Destroyed() override;
+
+	/**
+	 * Polls for classes that don't get initialized on the first frame and
+	 * initializes them
+	 */
+	void PollInit();
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -198,7 +205,12 @@ private:
 	 * Represents the controller the player is currently using. Used for
 	 * accessing the HUD in the character class
 	 */
+	UPROPERTY()
 	ABlasterPlayerController* BlasterPlayerController;
+
+	/** Represents the current state of the player */
+	UPROPERTY()
+	ABlasterPlayerState* BlasterPlayerState;
 
 	/** Handle to the player respawn timer */
 	FTimerHandle ElimTimer;

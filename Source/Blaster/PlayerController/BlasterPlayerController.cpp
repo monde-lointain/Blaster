@@ -55,3 +55,25 @@ void ABlasterPlayerController::SetHUDHealth(
 			FText::FromString(HealthText));
 	}
 }
+
+void ABlasterPlayerController::SetHUDScore(float Score)
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+
+	bool bHUDIsValid = BlasterHUD &&
+		               BlasterHUD->CharacterOverlay &&
+		               BlasterHUD->CharacterOverlay->ScoreCounter;
+
+	if (bHUDIsValid)
+	{
+		// Display the player's current score in the score counter widget
+		FString ScoreText =
+			FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
+		BlasterHUD->CharacterOverlay->ScoreCounter->SetText(
+			FText::FromString(ScoreText));
+	}
+}
