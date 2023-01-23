@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/Weapon/WeaponTypes.h"
 #include "Components/ActorComponent.h"
@@ -34,8 +35,12 @@ public:
 	/** Handles equipping weapons */
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
-	/** Handles reloading */
+	/** Clientside reload function */
 	void Reload();
+
+	/** Ends the reloading process */
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
 protected:
 	virtual void BeginPlay() override;
@@ -90,6 +95,12 @@ protected:
 	/** Server RPC for reloading */
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
+
+	/**
+	 * Handles reload functionality that should happen on both server and
+	 * clients
+	 */
+	void HandleReload();
 
 private:
 	/** The character using this component */
@@ -211,4 +222,12 @@ private:
 	 * values
 	 */
 	void InitializeCarriedAmmo();
+
+	/** The current state of the character in combat */
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	/** Replication notify for combat state */
+	UFUNCTION()
+	void OnRep_CombatState();
 };

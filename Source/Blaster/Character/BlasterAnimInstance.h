@@ -112,4 +112,10 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bIsEliminated;
+
+
+	/** Flag for whether the character should be using FABRIK or not */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bShouldUseFABRIK;
 };

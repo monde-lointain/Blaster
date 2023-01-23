@@ -3,9 +3,10 @@
 #include "BlasterAnimInstance.h"
 
 #include "BlasterCharacter.h"
+#include "Blaster/BlasterTypes/CombatState.h"
+#include "Blaster/Weapon/Weapon.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Blaster/Weapon/Weapon.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
@@ -169,4 +170,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		//	FColor::Cyan
 		//);
 	}
+
+	// Don't use FABRIK when reloading
+	bShouldUseFABRIK =
+		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }

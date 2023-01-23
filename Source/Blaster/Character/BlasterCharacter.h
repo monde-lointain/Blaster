@@ -2,10 +2,11 @@
 
 #pragma once
 
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
-#include "CoreMinimal.h"
 #include "Components/TimelineComponent.h"
+#include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 
 #include "BlasterCharacter.generated.h"
@@ -64,7 +65,8 @@ public:
 		AActor* DamageCauser);
 
 	/** The player's current health */
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category = PlayerStats)
+	UPROPERTY(
+		VisibleAnywhere, ReplicatedUsing = OnRep_Health, Category = PlayerStats)
 	float CurrentHealth = 100.0f;
 
 	/** The player's maximum health */
@@ -139,7 +141,8 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = "true"))
 	UCombatComponent* Combat;
 
 	UFUNCTION(Server, Reliable)
@@ -314,4 +317,6 @@ public:
 	{
 		return bIsEliminated;
 	}
+
+	ECombatState GetCombatState() const;
 };

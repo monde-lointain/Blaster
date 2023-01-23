@@ -887,3 +887,13 @@ FVector ABlasterCharacter::GetHitTarget() const
 
 	return Combat->HitTarget;
 }
+
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	if (!Combat)
+	{
+		return ECombatState::ECS_MAX;
+	}
+
+	return Combat->CombatState;
+}

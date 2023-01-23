@@ -34,6 +34,9 @@ void UCombatComponent::GetLifetimeReplicatedProps(
 	// Register the ammo carried by the player to be replicated by the server.
 	// Only replicate for the owner
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
+
+	// Register the combat state to be replicated by the server
+	DOREPLIFETIME(UCombatComponent, CombatState);
 }
 
 void UCombatComponent::BeginPlay()
@@ -471,8 +474,9 @@ void UCombatComponent::Reload()
 	 * for all clients
 	 */
 
-	// Only message the server if we actually have ammo to save bandwidth
-	if (CarriedAmmo > 0)
+	// Only message the server if we actually have ammo to save bandwidth. Don't
+	// notify the server if we're already reloading either
+	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
 	{
 		ServerReload();
 	}
@@ -484,7 +488,39 @@ void UCombatComponent::ServerReload_Implementation()
 	{
 		return;
 	}
+	// Change the combat state, which will be replicated down to clients
+	CombatState = ECombatState::ECS_Reloading;
+	// Reload
+	HandleReload();
+}
 
+void UCombatComponent::FinishReloading()
+{
+	if (!Character)
+	{
+		return;
+	}
+	// Only let the server control who's reloading
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	    case (ECombatState::ECS_Reloading):
+		{
+			HandleReload();
+			break;
+		}
+	}
+}
+
+void UCombatComponent::HandleReload()
+{
 	Character->PlayReloadMontage();
 }
 
