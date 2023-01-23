@@ -191,6 +191,6 @@ private:
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
-	/** Maps the current carried ammo to each weapon type */
+	/** Map for the current carried ammo for each weapon type */
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 };
