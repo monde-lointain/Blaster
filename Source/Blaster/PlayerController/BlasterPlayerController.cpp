@@ -98,3 +98,24 @@ void ABlasterPlayerController::SetHUDElimCounter(int32 ElimCount)
 			FText::FromString(ElimCountText));
 	}
 }
+
+void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+
+	bool bHUDIsValid = BlasterHUD && 
+		               BlasterHUD->CharacterOverlay &&
+					   BlasterHUD->CharacterOverlay->WeaponAmmoCounter;
+
+	if (bHUDIsValid)
+	{
+		// Display the player's current elim count
+		FString AmmoCountText = FString::Printf(TEXT("%d"), Ammo);
+		BlasterHUD->CharacterOverlay->WeaponAmmoCounter->SetText(
+			FText::FromString(AmmoCountText));
+	}
+}

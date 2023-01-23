@@ -12,6 +12,8 @@ class UWidgetComponent;
 class UAnimationAsset;
 class ABulletShell;
 class UTexture2D;
+class ABlasterCharacter;
+class ABlasterPlayerController;
 
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
@@ -38,6 +40,12 @@ public:
 	/** Sets the properties for lifetime server replication */
 	virtual void GetLifetimeReplicatedProps(
 		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Replication notify for owner switching */
+	virtual void OnRep_Owner() override;
+
+	/** Updates the weapon ammo counter on the owning player's HUD */
+	void SetAmmoCountOnOwnerHUD();
 
 	/** Turns the widget displayed when overlapping a weapon on and off */
 	void ShowPickupWidget(bool bShowWidget);
@@ -103,6 +111,14 @@ protected:
 		int32 OtherBodyIndex);
 
 private:
+	/** The owning character of the weapon */
+	UPROPERTY()
+	ABlasterCharacter* BlasterOwnerCharacter;
+
+	/** The owning controller associated with the character owning the weapon */
+	UPROPERTY()
+	ABlasterPlayerController* BlasterOwnerController;
+
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
@@ -128,6 +144,24 @@ private:
 
 	/** Enables and disables physics for the weapon mesh */
 	void SetWeaponPhysicsEnabled(bool bPhysicsEnabled);
+
+	/** Current ammo for the weapon */
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo;
+
+	/** The max ammo the weapon can hold */
+	UPROPERTY(EditAnywhere)
+	int32 MaxAmmo;
+
+	/**
+	 * Expends the round fired and updates the current ammo count for the
+	 * weapon
+	 */
+	void SpendRound();
+
+	/** Replication notify for ammo count */
+	UFUNCTION()
+	void OnRep_Ammo();
 
 public:
 	/** Handles changes in the weapon state for the server */

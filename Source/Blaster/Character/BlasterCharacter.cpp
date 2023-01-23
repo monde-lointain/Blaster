@@ -212,6 +212,12 @@ void ABlasterCharacter::Eliminated()
 
 void ABlasterCharacter::MulticastEliminated_Implementation()
 {
+	// Set the player's ammo to zero
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDWeaponAmmo(0);
+	}
+
 	bIsEliminated = true;
 	PlayElimMontage();
 

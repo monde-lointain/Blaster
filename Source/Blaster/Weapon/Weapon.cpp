@@ -3,6 +3,7 @@
 #include "Weapon.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -79,6 +80,9 @@ void AWeapon::GetLifetimeReplicatedProps(
 
 	// Register the weapon state to be replicated by the server
 	DOREPLIFETIME(AWeapon, WeaponState);
+
+	// Register the ammo count in the weapon to be replicated by the server
+	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -102,6 +106,56 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,
 	if (BlasterCharacter)
 	{
 		BlasterCharacter->SetOverlappingWeapon(nullptr);
+	}
+}
+
+void AWeapon::SetAmmoCountOnOwnerHUD()
+{
+	// Check to make sure the owning character and controller are valid, then
+	// update the HUD with the weapon's current ammo count
+	if (!BlasterOwnerCharacter)
+	{
+		BlasterOwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
+	}
+	if (BlasterOwnerCharacter)
+	{
+		if (!BlasterOwnerController)
+		{
+			BlasterOwnerController = Cast<ABlasterPlayerController>(
+				BlasterOwnerCharacter->Controller);
+		}
+		if (BlasterOwnerController)
+		{
+			BlasterOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void AWeapon::SpendRound()
+{
+	Ammo--;
+	SetAmmoCountOnOwnerHUD();
+}
+
+void AWeapon::OnRep_Ammo()
+{
+	SetAmmoCountOnOwnerHUD();
+}
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+
+	// If the weapon's been dropped or otherwise doesn't have an owner
+	if (!Owner)
+	{
+		BlasterOwnerCharacter = nullptr;
+		BlasterOwnerController = nullptr;
+	}
+	else
+	{
+		// Update the ammo count on the new owner's HUD
+		SetAmmoCountOnOwnerHUD();
 	}
 }
 
@@ -219,6 +273,9 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+
+	// Reduce the ammo count by one and update the player HUD
+	SpendRound();
 }
 
 void AWeapon::Dropped()
@@ -231,4 +288,6 @@ void AWeapon::Dropped()
 
 	// Clear the weapon's owner
 	SetOwner(nullptr);
+	BlasterOwnerCharacter = nullptr;
+	BlasterOwnerController = nullptr;
 }

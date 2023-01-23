@@ -384,6 +384,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		return;
 	}
 
+	// If we're already holding a weapon, drop it and pick up the new one
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
+
 	// Replicated from server to clients
 	EquippedWeapon = WeaponToEquip;
 
@@ -391,6 +397,9 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// Automatically replicated by the actor class method AActor::OnRep_Owner
 	EquippedWeapon->SetOwner(Character);
+
+	// Update the ammo count on the server
+	EquippedWeapon->SetAmmoCountOnOwnerHUD();
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;

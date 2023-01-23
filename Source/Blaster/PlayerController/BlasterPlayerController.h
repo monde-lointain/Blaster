@@ -24,8 +24,11 @@ public:
 	/** Updates the score counter on the HUD widget */
 	void SetHUDScore(float Score);
 
-	/** Updates the score counter on the HUD widget */
+	/** Updates the elim counter on the HUD widget */
 	void SetHUDElimCounter(int32 ElimCount);
+
+	/** Updates the ammo counter on the HUD widget */
+	void SetHUDWeaponAmmo(int32 Ammo);
 
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;

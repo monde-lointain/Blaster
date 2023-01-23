@@ -34,4 +34,8 @@ public:
 	/** Player elimination counter text widget */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ElimCounter;
+
+	/** Player ammo counter text widget */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WeaponAmmoCounter;
 };
