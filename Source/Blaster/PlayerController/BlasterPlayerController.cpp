@@ -120,7 +120,7 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 	}
 }
 
-void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
+void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 {
 	// Make sure we initialize the HUD in case it hasn't been initialized yet
 	if (!BlasterHUD)

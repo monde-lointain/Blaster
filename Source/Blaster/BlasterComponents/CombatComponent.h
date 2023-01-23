@@ -31,7 +31,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(
 		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	/** Handles equipping weapons */
 	void EquipWeapon(AWeapon* WeaponToEquip);
+
+	/** Handles reloading */
+	void Reload();
 
 protected:
 	virtual void BeginPlay() override;
@@ -82,6 +86,10 @@ protected:
 
 	/** Sets the textures for the HUD crosshairs */
 	void SetHUDCrosshairs(float DeltaTime);
+
+	/** Server RPC for reloading */
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
 
 private:
 	/** The character using this component */
@@ -191,6 +199,16 @@ private:
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
-	/** Map for the current carried ammo for each weapon type */
+	/** Map for the ammo counts being carried on the player for each weapon type */
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	/** Starting ammo for assault rifles  */
+	UPROPERTY(EditAnywhere, Category = StartingAmmo)
+	int AssaultRifleStartAmmo = 30;
+
+	/**
+	 * Sets the carried ammo amounts for each weapon type to their starting
+	 * values
+	 */
+	void InitializeCarriedAmmo();
 };

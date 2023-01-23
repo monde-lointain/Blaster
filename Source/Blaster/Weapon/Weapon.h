@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "WeaponTypes.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
@@ -163,6 +164,10 @@ private:
 	UFUNCTION()
 	void OnRep_Ammo();
 
+	/** The weapon type */
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
+
 public:
 	/** Handles changes in the weapon state for the server */
 	void SetWeaponState(EWeaponState State);
@@ -188,6 +193,11 @@ public:
 	FORCEINLINE float GetZoomInterpSpeed() const
 	{
 		return ZoomInterpSpeed;
+	}
+
+	FORCEINLINE EWeaponType GetWeaponType() const
+	{
+		return WeaponType;
 	}
 
 	/** Returns true if Ammo == 0 */

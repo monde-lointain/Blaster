@@ -50,6 +50,13 @@ void UCombatComponent::BeginPlay()
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
+
+		// We only want the server to have control over the amount of ammo we're
+		// carrying
+		if (Character->HasAuthority())
+		{
+			InitializeCarriedAmmo();
+		}
 	}
 }
 
@@ -289,6 +296,21 @@ bool UCombatComponent::CanFire()
 
 void UCombatComponent::OnRep_CarriedAmmo()
 {
+	// Update the carried ammo counter on the HUD
+	if (!Controller)
+	{
+		Controller = Cast<ABlasterPlayerController>(Character->Controller);
+	}
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	// Initialize the ammo for all the different weapon types
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, AssaultRifleStartAmmo);
 }
 
 // When a client calls this server RPC, the server will execute its multicast
@@ -417,11 +439,53 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Automatically replicated by the actor class method AActor::OnRep_Owner
 	EquippedWeapon->SetOwner(Character);
 
-	// Update the ammo count on the server
+	// Update the weapon ammo counter on the HUD
 	EquippedWeapon->SetAmmoCountOnOwnerHUD();
+
+	// Set the carried ammo amount on the player to the amount they have on them
+	// for that particular weapon type
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	// Update the carried ammo counter on the HUD
+	if (!Controller)
+	{
+		Controller = Cast<ABlasterPlayerController>(Character->Controller);
+	}
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::Reload()
+{
+	/**
+	 * If we're on a client, ask the server if it's okay to reload, before
+	 * letting the server relay that it's time to replay the reload animation
+	 * for all clients
+	 */
+
+	// Only message the server if we actually have ammo to save bandwidth
+	if (CarriedAmmo > 0)
+	{
+		ServerReload();
+	}
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (!Character)
+	{
+		return;
+	}
+
+	Character->PlayReloadMontage();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()

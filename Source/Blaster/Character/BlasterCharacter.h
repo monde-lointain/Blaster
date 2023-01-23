@@ -50,6 +50,7 @@ public:
 
 	/** These handle playing various animation montages for the player */
 	void PlayFireMontage(bool bAiming);
+	void PlayReloadMontage();
 	void PlayHitReactMontage();
 	void PlayElimMontage();
 
@@ -102,6 +103,7 @@ protected:
 	void LookRight(float Value);
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
+	void ReloadButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
 	void FireButtonPressed();
@@ -157,6 +159,10 @@ private:
 	/** Animation montage for firing weapons */
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+
+	/** Animation montage for reloading */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
 
 	/** Animation montage for getting hit */
 	UPROPERTY(EditAnywhere, Category = Combat)
