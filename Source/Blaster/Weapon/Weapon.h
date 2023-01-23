@@ -189,4 +189,7 @@ public:
 	{
 		return ZoomInterpSpeed;
 	}
+
+	/** Returns true if Ammo == 0 */
+	bool IsEmpty();
 };

@@ -133,7 +133,9 @@ void AWeapon::SetAmmoCountOnOwnerHUD()
 
 void AWeapon::SpendRound()
 {
-	Ammo--;
+	// Make sure the ammo count can never go below zero or above the max ammo
+	// for the weapon
+	Ammo = FMath::Clamp(Ammo - 1, 0, MaxAmmo);
 	SetAmmoCountOnOwnerHUD();
 }
 
@@ -193,6 +195,11 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			break;
 		}
 	}
+}
+
+bool AWeapon::IsEmpty()
+{
+	return Ammo <= 0;
 }
 
 // Handles the replication of the weapon's state from the server to the clients

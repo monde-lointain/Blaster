@@ -176,4 +176,6 @@ private:
 
 	/** Callback for when the fire timer has ended */
 	void FireTimerFinished();
+
+	bool CanFire();
 };

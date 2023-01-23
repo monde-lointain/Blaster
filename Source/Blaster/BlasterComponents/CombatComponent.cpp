@@ -226,10 +226,11 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if (bCanFire)
+	if (CanFire())
 	{
 		ServerFire(HitTarget);
 
+		// Make the crosshairs spread apart when firing
 		if (EquippedWeapon)
 		{
 			CrosshairShootFactor = 0.75f;
@@ -270,6 +271,16 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+}
+
+bool UCombatComponent::CanFire()
+{
+	if (!EquippedWeapon)
+	{
+		return false;
+	}
+
+	return !EquippedWeapon->IsEmpty() || !bCanFire;
 }
 
 // When a client calls this server RPC, the server will execute its multicast
