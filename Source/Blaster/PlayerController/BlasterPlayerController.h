@@ -30,6 +30,9 @@ public:
 	/** Updates the ammo counter on the HUD widget */
 	void SetHUDWeaponAmmo(int32 Ammo);
 
+	/** Updates the ammo counter on the HUD widget */
+	void SetHUDCarriedAmmo(int32 Ammo);
+
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;
 

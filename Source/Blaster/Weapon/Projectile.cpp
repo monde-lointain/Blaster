@@ -64,7 +64,9 @@ void AProjectile::BeginPlay()
 	}
 }
 
-void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& HitResult)
+void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
+	const FHitResult& HitResult)
 {
 	Destroy();
 }

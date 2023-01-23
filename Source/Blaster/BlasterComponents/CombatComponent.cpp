@@ -30,6 +30,10 @@ void UCombatComponent::GetLifetimeReplicatedProps(
 
 	// Register the aiming flag to be replicated by the server
 	DOREPLIFETIME(UCombatComponent, bIsAiming);
+
+	// Register the ammo carried by the player to be replicated by the server.
+	// Only replicate for the owner
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::BeginPlay()
@@ -281,6 +285,10 @@ bool UCombatComponent::CanFire()
 	}
 
 	return !EquippedWeapon->IsEmpty() || !bCanFire;
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
 }
 
 // When a client calls this server RPC, the server will execute its multicast

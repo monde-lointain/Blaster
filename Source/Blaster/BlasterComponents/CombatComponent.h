@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/Weapon/WeaponTypes.h"
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 
@@ -178,4 +179,18 @@ private:
 	void FireTimerFinished();
 
 	bool CanFire();
+
+	/**
+	 * Indicates the ammo carried on the player for the currently equipped
+	 * weapon
+	 */
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo;
+
+	/** Replication notify for carried ammo */
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	/** Maps the current carried ammo to each weapon type */
+	TMap<EWeaponType, int32> CarriedAmmoMap;
 };

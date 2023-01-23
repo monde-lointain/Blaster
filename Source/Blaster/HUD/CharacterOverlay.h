@@ -35,7 +35,11 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ElimCounter;
 
-	/** Player ammo counter text widget */
+	/** Text widget for the ammo on the weapon */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* WeaponAmmoCounter;
+
+	/** Text widget for the ammo the player is carrying */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* CarriedAmmoCounter;
 };
