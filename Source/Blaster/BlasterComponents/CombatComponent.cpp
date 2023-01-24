@@ -286,6 +286,12 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+
+	// Autoreload if the weapon gets emptied
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
 }
 
 bool UCombatComponent::CanFire()
@@ -475,6 +481,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 			EquippedWeapon->EquipSound, 
 			Character->GetActorLocation()
 		);
+	}
+	
+	// Autoreload if the weapon is empty when it gets picked up
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
 	}
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
