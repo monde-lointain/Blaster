@@ -171,7 +171,11 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		//);
 	}
 
-	// Don't use FABRIK when reloading
+	// Don't rotate the right hand, use FABRIK or use aim offsets when reloading
 	bShouldUseFABRIK =
+		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bShouldUseAimOffsets =
+		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bShouldRotateRightHand =
 		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }

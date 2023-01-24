@@ -113,9 +113,18 @@ private:
 		meta = (AllowPrivateAccess = true))
 	bool bIsEliminated;
 
-
 	/** Flag for whether the character should be using FABRIK or not */
 	UPROPERTY(BlueprintReadOnly, Category = Movement,
 		meta = (AllowPrivateAccess = true))
 	bool bShouldUseFABRIK;
+
+	/** Flag for whether the character should be using aim offsets or not */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bShouldUseAimOffsets;
+
+	/** Flag for whether the character should rotate their right hand or not */
+	UPROPERTY(BlueprintReadOnly, Category = Movement,
+		meta = (AllowPrivateAccess = true))
+	bool bShouldRotateRightHand;
 };

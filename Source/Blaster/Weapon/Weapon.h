@@ -15,6 +15,7 @@ class ABulletShell;
 class UTexture2D;
 class ABlasterCharacter;
 class ABlasterPlayerController;
+class USoundCue;
 
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
@@ -91,6 +92,13 @@ public:
 	/** Indicates whether a weapon is automatic or not */
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bIsAutomatic = true;
+
+	/**
+	 * Sound that plays when equipping a weapon. Changes depending on the
+	 * weapon type
+	 */
+	UPROPERTY(EditAnywhere)
+	USoundCue* EquipSound;
 
 protected:
 	/** Called when the game starts or when spawned */
