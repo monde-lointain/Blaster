@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
 
+	/** Updates the ammo count on reload */
+	void UpdateAmmoCounts();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -101,6 +104,9 @@ protected:
 	 * clients
 	 */
 	void HandleReload();
+
+	/** Gets the amount of ammo to reload when reloading a weapon */
+	int32 CalculateReloadAmmo();
 
 private:
 	/** The character using this component */

@@ -57,6 +57,9 @@ public:
 	/** Handles dropping the weapon */
 	void Dropped();
 
+	/** Handles putting ammo into the weapon when reloading */
+	void AddAmmo(int32 AmountToAdd);
+
 	/** Textures for the weapon crosshairs */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;
@@ -198,6 +201,16 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const
 	{
 		return WeaponType;
+	}
+
+	FORCEINLINE int32 GetCurrentAmmo() const
+	{
+		return Ammo;
+	}
+
+	FORCEINLINE int32 GetMaxAmmo() const
+	{
+		return MaxAmmo;
 	}
 
 	/** Returns true if Ammo == 0 */

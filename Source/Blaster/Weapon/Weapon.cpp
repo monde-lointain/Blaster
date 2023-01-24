@@ -298,3 +298,9 @@ void AWeapon::Dropped()
 	BlasterOwnerCharacter = nullptr;
 	BlasterOwnerController = nullptr;
 }
+
+void AWeapon::AddAmmo(int32 AmountToAdd)
+{
+	Ammo = FMath::Clamp(Ammo + AmountToAdd, 0, MaxAmmo);
+	SetAmmoCountOnOwnerHUD();
+}

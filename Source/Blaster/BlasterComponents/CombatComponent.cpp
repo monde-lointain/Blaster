@@ -488,32 +488,61 @@ void UCombatComponent::Reload()
 
 void UCombatComponent::ServerReload_Implementation()
 {
-	if (!Character)
-	{
-		return;
-	}
 	// Change the combat state, which will be replicated down to clients
 	CombatState = ECombatState::ECS_Reloading;
 	// Reload
 	HandleReload();
 }
 
+// NOTE: Plays at the end of the reload animation (specifically at the anim
+// notify ReloadFinish in the reload montage)
 void UCombatComponent::FinishReloading()
 {
 	if (!Character)
 	{
 		return;
 	}
-	// Only let the server control who's reloading
+	// Reset the weapon state and add ammo into the weapon
 	if (Character->HasAuthority())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoCounts();
 	}
 	// Fire again if we're still holding down the button
 	if (bFireButtonPressed)
 	{
 		Fire();
 	}
+}
+
+void UCombatComponent::UpdateAmmoCounts()
+{
+	if (!Character || !EquippedWeapon)
+	{
+		return;
+	}
+
+	int32 ReloadAmount = CalculateReloadAmmo();
+
+	// Update the carried ammo counters for that particular weapon
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	// Update the carried ammo counter on the HUD
+	if (!Controller)
+	{
+		Controller = Cast<ABlasterPlayerController>(Character->Controller);
+	}
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	// Add the ammo into the weapon
+	EquippedWeapon->AddAmmo(ReloadAmount);
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -526,6 +555,7 @@ void UCombatComponent::OnRep_CombatState()
 			{
 				Fire();
 			}
+			break;
 		}
 	    case (ECombatState::ECS_Reloading):
 		{
@@ -538,6 +568,30 @@ void UCombatComponent::OnRep_CombatState()
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReloadMontage();
+}
+
+int32 UCombatComponent::CalculateReloadAmmo()
+{
+	if (!EquippedWeapon)
+	{
+		return 0;
+	}
+
+	int32 AmountEmpty =
+		EquippedWeapon->GetMaxAmmo() - EquippedWeapon->GetCurrentAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		// Only reload enough ammo to fill the weapon to max capacity
+		int32 Least = FMath::Min(AmountEmpty, AmountCarried);
+		// Clamp in case the current ammo is set higher than the max ammo for
+		// whatever reason
+		return FMath::Clamp(AmountEmpty, 0, Least);
+	}
+
+	// Return zero if we try to add ammo to a weapon type that isn't in the map
+	return 0;
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
