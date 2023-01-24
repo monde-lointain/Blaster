@@ -14,6 +14,12 @@ void ABlasterPlayerController::BeginPlay()
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 }
 
+void ABlasterPlayerController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	SetHUDTime();
+}
+
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
@@ -139,4 +145,41 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 		BlasterHUD->CharacterOverlay->CarriedAmmoCounter->SetText(
 			FText::FromString(AmmoCountText));
 	}
+}
+
+void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+
+	bool bHUDIsValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->MatchTimerText;
+
+	if (bHUDIsValid)
+	{
+		// Calculate the minutes and seconds remaining in the match, then update
+		// the match countdown timer
+		int32 Minutes = FMath::FloorToInt(RemainingTime / 60.0f);
+		int32 Seconds = FMath::FloorToInt(RemainingTime - (Minutes * 60));
+
+		FString RemainingTimeText =
+			FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		BlasterHUD->CharacterOverlay->MatchTimerText->SetText(
+			FText::FromString(RemainingTimeText));
+	}
+}
+
+void ABlasterPlayerController::SetHUDTime()
+{
+	uint32 SecondsRemaining =
+		FMath::CeilToInt(MatchTime - GetWorld()->GetTimeSeconds());
+	if (CountdownInt != SecondsRemaining)
+	{
+		SetHUDRemainingMatchTime(MatchTime - GetWorld()->GetTimeSeconds());
+	}
+	CountdownInt = SecondsRemaining;
 }

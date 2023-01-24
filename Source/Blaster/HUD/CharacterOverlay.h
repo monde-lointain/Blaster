@@ -42,4 +42,8 @@ public:
 	/** Text widget for the ammo the player is carrying */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CarriedAmmoCounter;
+
+	/** Text widget for the remaining match time */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchTimerText;
 };
