@@ -294,7 +294,9 @@ bool UCombatComponent::CanFire()
 		return false;
 	}
 
-	return !EquippedWeapon->IsEmpty() || !bCanFire;
+	return !EquippedWeapon->IsEmpty() && 
+		   bCanFire &&
+		   CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()
@@ -333,7 +335,9 @@ void UCombatComponent::MulticastFire_Implementation(
 		return;
 	}
 
-	if (Character)
+	// ONLY fire again if we're not reloading, otherwise the animation will get
+	// stuck
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		Character->PlayFireMontage(bIsAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
@@ -505,12 +509,24 @@ void UCombatComponent::FinishReloading()
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
 	}
+	// Fire again if we're still holding down the button
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
 	{
+	    case (ECombatState::ECS_Unoccupied):
+		{
+			if (bFireButtonPressed)
+			{
+				Fire();
+			}
+		}
 	    case (ECombatState::ECS_Reloading):
 		{
 			HandleReload();
