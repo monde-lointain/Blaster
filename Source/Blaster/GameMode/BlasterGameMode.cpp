@@ -8,6 +8,54 @@
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 
+ABlasterGameMode::ABlasterGameMode()
+{
+	bDelayedStart = true;
+}
+
+void ABlasterGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+	LevelStartTime = GetWorld()->GetTimeSeconds();
+}
+
+void ABlasterGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Update the warmup time before we start the match
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		CountdownTime =
+			WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartTime;
+
+		// Start the match when we end the countdown
+		if (CountdownTime <= 0.0f)
+		{
+			StartMatch();
+		}
+	}
+}
+
+void ABlasterGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	// Get all player controllers in the game and update the current match state
+	// on them
+	for (FConstPlayerControllerIterator I = GetWorld()->GetPlayerControllerIterator();
+		 I;
+		 I++)
+	{
+		ABlasterPlayerController* Player = Cast<ABlasterPlayerController>(*I);
+
+		if (Player)
+		{
+			Player->OnMatchStateSet(MatchState);
+		}
+	}
+}
+
 void ABlasterGameMode::PlayerEliminated(
 	ABlasterCharacter* EliminatedCharacter,
 	ABlasterPlayerController* EliminatedController,

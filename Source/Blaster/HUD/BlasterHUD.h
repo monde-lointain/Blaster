@@ -45,15 +45,17 @@ public:
 	virtual void DrawHUD() override;
 
 	/** HUD widgets representing the player's character overlay */
+	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
 
 	/** Class for the player's character overlay */
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
+	void AddCharacterOverlay();
+
 protected:
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
 
 private:
 	/**

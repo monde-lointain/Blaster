@@ -3,10 +3,12 @@
 #include "BlasterPlayerController.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -14,10 +16,33 @@ void ABlasterPlayerController::BeginPlay()
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 }
 
+void ABlasterPlayerController::GetLifetimeReplicatedProps(
+	TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Register the match state to be replicated by the server
+	DOREPLIFETIME(ABlasterPlayerController, MatchState);
+}
+
 void ABlasterPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	SetHUDTime();
+	CheckTimeSync(DeltaTime);
+	PollInit();
+}
+
+void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
+{
+	TimeSinceLastSync += DeltaTime;
+	// Sync up with the server at the designated sync interval
+	if (IsLocalController() && TimeSinceLastSync > TimeSyncFrequency)
+	{
+		ServerRequestServerTime(GetCurrentLocalTime());
+		TimeSinceLastSync = 0.0f;
+	}
 }
 
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
@@ -60,6 +85,13 @@ void ABlasterPlayerController::SetHUDHealth(
 		BlasterHUD->CharacterOverlay->HealthText->SetText(
 			FText::FromString(HealthText));
 	}
+	// Cache the health to be initialized later if the HUD hasn't been set yet
+	else
+	{
+		bCharacterOverlayNeedsInit = true;
+		HUDHealth = CurrentHealth;
+		HUDMaxHealth = MaxHealth;
+	}
 }
 
 void ABlasterPlayerController::SetHUDScore(float Score)
@@ -82,6 +114,12 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 		BlasterHUD->CharacterOverlay->ScoreCounter->SetText(
 			FText::FromString(ScoreText));
 	}
+	// Cache the score to be initialized later if the HUD hasn't been set yet
+	else
+	{
+		bCharacterOverlayNeedsInit = true;
+		HUDScore = Score;
+	}
 }
 
 void ABlasterPlayerController::SetHUDElimCounter(int32 ElimCount)
@@ -102,6 +140,12 @@ void ABlasterPlayerController::SetHUDElimCounter(int32 ElimCount)
 		FString ElimCountText = FString::Printf(TEXT("%d"), ElimCount);
 		BlasterHUD->CharacterOverlay->ElimCounter->SetText(
 			FText::FromString(ElimCountText));
+	}
+	// Cache the elim count to be initialized later if the HUD hasn't been set yet
+	else
+	{
+		bCharacterOverlayNeedsInit = true;
+		HUDElims = ElimCount;
 	}
 }
 
@@ -175,11 +219,118 @@ void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
 
 void ABlasterPlayerController::SetHUDTime()
 {
-	uint32 SecondsRemaining =
-		FMath::CeilToInt(MatchTime - GetWorld()->GetTimeSeconds());
+	// Sync up the client and server times
+	uint32 SecondsRemaining = FMath::CeilToInt(MatchTime - GetServerTime());
+
 	if (CountdownInt != SecondsRemaining)
 	{
-		SetHUDRemainingMatchTime(MatchTime - GetWorld()->GetTimeSeconds());
+		SetHUDRemainingMatchTime(MatchTime - GetServerTime());
 	}
 	CountdownInt = SecondsRemaining;
+}
+
+void ABlasterPlayerController::PollInit()
+{
+	// Check if the character overlay hasn't been initialized yet, and if not,
+	// then get it from the HUD
+	if (!CharacterOverlay)
+	{
+		if (BlasterHUD && BlasterHUD->CharacterOverlay)
+		{
+			CharacterOverlay = BlasterHUD->CharacterOverlay;
+
+			// Initialize the HUD time and score counters when the overlay is
+			// ready
+			if (CharacterOverlay)
+			{
+				SetHUDHealth(HUDHealth, HUDMaxHealth);
+				SetHUDScore(HUDScore);
+				SetHUDElimCounter(HUDElims);
+			}
+		}
+	}
+}
+
+void ABlasterPlayerController::ServerRequestServerTime_Implementation(
+	float TimeOfClientRequest)
+{
+	// Set the time we recieved the message at
+	float ServerTimeOfReciept = GetCurrentLocalTime();
+	// Send back to the client the time the client sent the message to the
+	// server at, and the time the server recieved the client message
+	ClientReportServerTime(TimeOfClientRequest, ServerTimeOfReciept);
+}
+
+void ABlasterPlayerController::ClientReportServerTime_Implementation(
+	float TimeOfClientRequest, float TimeServerRecievedClientRequest)
+{
+	float RoundTripTime = GetCurrentLocalTime() - TimeOfClientRequest;
+	// Make an estimate of the current server time by assuming the time taken
+	// from the message to travel from the server to the client was exactly 1/2
+	// the round trip time
+	float ServerCurrentTime = (0.5f * RoundTripTime) + TimeServerRecievedClientRequest;
+	ClientToServerDeltaTime = ServerCurrentTime - GetCurrentLocalTime();
+}
+
+float ABlasterPlayerController::GetCurrentLocalTime()
+{
+	return GetWorld()->GetTimeSeconds();
+}
+
+float ABlasterPlayerController::GetServerTime()
+{
+	if (HasAuthority())
+	{
+		return GetCurrentLocalTime();
+	}
+	else
+	{
+		return GetCurrentLocalTime() + ClientToServerDeltaTime;
+	}
+}
+
+void ABlasterPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+
+	if (IsLocalController())
+	{
+		ServerRequestServerTime(GetCurrentLocalTime());
+	}
+}
+
+void ABlasterPlayerController::OnMatchStateSet(FName State)
+{
+	MatchState = State;
+
+	// Set the character overlays when the match starts
+	if (MatchState == MatchState::InProgress)
+	{
+		// Make sure we initialize the HUD in case it hasn't been initialized yet
+		if (!BlasterHUD)
+		{
+			BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+		}
+		if (BlasterHUD)
+		{
+			BlasterHUD->AddCharacterOverlay();
+		}
+	}
+}
+
+void ABlasterPlayerController::OnRep_MatchState()
+{
+	// Set the character overlays when the match starts
+	if (MatchState == MatchState::InProgress)
+	{
+		// Make sure we initialize the HUD in case it hasn't been initialized yet
+		if (!BlasterHUD)
+		{
+			BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+		}
+		if (BlasterHUD)
+		{
+			BlasterHUD->AddCharacterOverlay();
+		}
+	}
 }
