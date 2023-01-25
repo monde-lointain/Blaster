@@ -4,6 +4,7 @@
 
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/HUD/Announcement.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
@@ -14,6 +15,13 @@ void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+
+	// Create the announcement UI to show that we're waiting for the match to
+	// start
+	if (BlasterHUD)
+	{
+		BlasterHUD->AddAnnouncement();
+	}
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(
@@ -303,18 +311,15 @@ void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
 
+	// Set the announcement HUD if we're waiting to start
+	if (MatchState == MatchState::WaitingToStart)
+	{
+
+	}
 	// Set the character overlays when the match starts
 	if (MatchState == MatchState::InProgress)
 	{
-		// Make sure we initialize the HUD in case it hasn't been initialized yet
-		if (!BlasterHUD)
-		{
-			BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-		}
-		if (BlasterHUD)
-		{
-			BlasterHUD->AddCharacterOverlay();
-		}
+		HandleMatchHasStarted();
 	}
 }
 
@@ -323,14 +328,25 @@ void ABlasterPlayerController::OnRep_MatchState()
 	// Set the character overlays when the match starts
 	if (MatchState == MatchState::InProgress)
 	{
-		// Make sure we initialize the HUD in case it hasn't been initialized yet
-		if (!BlasterHUD)
+		HandleMatchHasStarted();
+	}
+}
+
+void ABlasterPlayerController::HandleMatchHasStarted()
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+	if (BlasterHUD)
+	{
+		BlasterHUD->AddCharacterOverlay();
+
+		// Hide the announcement UI
+		if (BlasterHUD->Announcement)
 		{
-			BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-		}
-		if (BlasterHUD)
-		{
-			BlasterHUD->AddCharacterOverlay();
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 }

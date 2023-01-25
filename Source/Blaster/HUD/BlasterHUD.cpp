@@ -2,6 +2,7 @@
 
 #include "BlasterHUD.h"
 
+#include "Announcement.h"
 #include "CharacterOverlay.h"
 
 void ABlasterHUD::BeginPlay()
@@ -20,6 +21,20 @@ void ABlasterHUD::AddCharacterOverlay()
 		CharacterOverlay = CreateWidget<UCharacterOverlay>(
 			PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void ABlasterHUD::AddAnnouncement()
+{
+	// Check to see if the player controller and the announcement class are
+	// valid, then create the announcement UI and add it to the viewport
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && AnnouncementClass)
+	{
+		Announcement =
+			CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
 

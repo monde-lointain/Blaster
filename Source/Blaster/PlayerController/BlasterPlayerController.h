@@ -62,6 +62,8 @@ public:
 	/** Handles switching between match states from the player controller */
 	void OnMatchStateSet(FName State);
 
+	void HandleMatchHasStarted();
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
