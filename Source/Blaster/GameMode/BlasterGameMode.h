@@ -68,4 +68,10 @@ protected:
 private:
 	/** Timer for the warmup counter */
 	float CountdownTime = 0.0f;
+
+public:
+	FORCEINLINE float GetCountdownTime() const
+	{
+		return CountdownTime;
+	}
 };

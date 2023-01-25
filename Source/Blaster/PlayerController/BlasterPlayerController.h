@@ -8,6 +8,7 @@
 #include "BlasterPlayerController.generated.h"
 
 class ABlasterHUD;
+class ABlasterGameMode;
 class UCharacterOverlay;
 
 /**
@@ -119,18 +120,26 @@ protected:
 
 	/** Client RPC that handles updating the match state upon joining */
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float StartTime);
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Cooldown,
+		float Match, float StartTime);
 
 private:
 	/** Represents the HUD for the character */
 	UPROPERTY()
 	ABlasterHUD* BlasterHUD;
 
+	/** Represents the game mode this character is currently in */
+	UPROPERTY()
+	ABlasterGameMode* BlasterGameMode;
+
 	/** The total time the match takes. Retrieved from the game mode */
 	float MatchTime = 0.0f;
 
 	/** Time to wait before starting the match. Retrieved from the game mode */
 	float WarmupTime = 0.0f;
+
+	/** Time to wait after ending the match. Retrieved from the game mode */
+	float CooldownTime = 0.0f;
 
 	/** Time in seconds in which the level was loaded. Retrieved from the game mode */
 	float LevelStartTime = 0.0f;
