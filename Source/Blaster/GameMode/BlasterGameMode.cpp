@@ -8,6 +8,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	bDelayedStart = true;
@@ -35,6 +40,18 @@ void ABlasterGameMode::Tick(float DeltaTime)
 			StartMatch();
 		}
 	}
+	// Track the match time to see when we need to display the cooldown screen
+	else if (MatchState == MatchState::InProgress)
+	{
+		CountdownTime = (WarmupTime + MatchTime)
+						- GetWorld()->GetTimeSeconds() + LevelStartTime;
+
+		// End the match when the timer hits zero
+		if (CountdownTime <= 0.0f)
+		{
+			SetMatchState(MatchState::Cooldown);
+		}
+	}
 }
 
 void ABlasterGameMode::OnMatchStateSet()
@@ -43,15 +60,15 @@ void ABlasterGameMode::OnMatchStateSet()
 
 	// Get all player controllers in the game and update the current match state
 	// on them
-	for (FConstPlayerControllerIterator I = GetWorld()->GetPlayerControllerIterator();
-		 I;
-		 I++)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator();
+		 It;
+		 It++)
 	{
-		ABlasterPlayerController* Player = Cast<ABlasterPlayerController>(*I);
-
-		if (Player)
+		ABlasterPlayerController* BlasterPlayer =
+			Cast<ABlasterPlayerController>(*It);
+		if (BlasterPlayer)
 		{
-			Player->OnMatchStateSet(MatchState);
+			BlasterPlayer->OnMatchStateSet(MatchState);
 		}
 	}
 }

@@ -37,6 +37,9 @@ public:
 	/** Updates the time remaining counter on the HUD */
 	void SetHUDRemainingMatchTime(float RemainingTime);
 
+	/** Updates the time remaining counter on the announcement HUD timer */
+	void SetHUDRemainingAnnouncementTime(float RemainingTime);
+
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -63,6 +66,8 @@ public:
 	void OnMatchStateSet(FName State);
 
 	void HandleMatchHasStarted();
+
+	void HandleCooldown();
 
 protected:
 	/** Called when the game starts or when spawned */
@@ -108,13 +113,27 @@ protected:
 	/** Syncs the client and server time at the time sync interval */
 	void CheckTimeSync(float DeltaTime);
 
+	/** Server RPC for the match state */
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	/** Client RPC that handles updating the match state upon joining */
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float StartTime);
+
 private:
 	/** Represents the HUD for the character */
 	UPROPERTY()
 	ABlasterHUD* BlasterHUD;
 
-	/** The total time the match takes */
-	float MatchTime = 120.0f;
+	/** The total time the match takes. Retrieved from the game mode */
+	float MatchTime = 0.0f;
+
+	/** Time to wait before starting the match. Retrieved from the game mode */
+	float WarmupTime = 0.0f;
+
+	/** Time in seconds in which the level was loaded. Retrieved from the game mode */
+	float LevelStartTime = 0.0f;
 
 	uint32 CountdownInt = 0;
 
@@ -138,4 +157,6 @@ private:
 	float HUDMaxHealth;
 	float HUDScore;
 	int32 HUDElims;
+	int32 HUDWeaponAmmo;
+	int32 HUDCarriedAmmo;
 };

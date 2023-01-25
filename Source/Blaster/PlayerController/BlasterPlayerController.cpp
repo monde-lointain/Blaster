@@ -9,19 +9,15 @@
 #include "Blaster/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 
-	// Create the announcement UI to show that we're waiting for the match to
-	// start
-	if (BlasterHUD)
-	{
-		BlasterHUD->AddAnnouncement();
-	}
+	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	ServerCheckMatchState();
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(
@@ -50,6 +46,41 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
 	{
 		ServerRequestServerTime(GetCurrentLocalTime());
 		TimeSinceLastSync = 0.0f;
+	}
+}
+
+void ABlasterPlayerController::ServerCheckMatchState_Implementation()
+{
+	ABlasterGameMode* GameMode =
+		Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+
+	if (GameMode)
+	{
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartTime = GameMode->LevelStartTime;
+		MatchState = GameMode->GetMatchState();
+
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartTime);
+	}
+}
+
+void ABlasterPlayerController::ClientJoinMidgame_Implementation(
+	FName StateOfMatch, float Warmup, float Match, float StartTime)
+{
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	LevelStartTime = StartTime;
+	MatchState = StateOfMatch;
+
+	// Set the match state here too in case this ends up getting called first
+	OnMatchStateSet(MatchState);
+
+	// Create the announcement UI to show that we're waiting for the match to
+	// start
+	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+	{
+		BlasterHUD->AddAnnouncement();
 	}
 }
 
@@ -149,7 +180,8 @@ void ABlasterPlayerController::SetHUDElimCounter(int32 ElimCount)
 		BlasterHUD->CharacterOverlay->ElimCounter->SetText(
 			FText::FromString(ElimCountText));
 	}
-	// Cache the elim count to be initialized later if the HUD hasn't been set yet
+	// Cache the elim count to be initialized later if the HUD hasn't been set
+	// yet
 	else
 	{
 		bCharacterOverlayNeedsInit = true;
@@ -176,6 +208,13 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		BlasterHUD->CharacterOverlay->WeaponAmmoCounter->SetText(
 			FText::FromString(AmmoCountText));
 	}
+	// Cache the weapon ammo to be initialized later if the HUD hasn't been set
+	// yet
+	else
+	{
+		bCharacterOverlayNeedsInit = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -197,6 +236,13 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 		BlasterHUD->CharacterOverlay->CarriedAmmoCounter->SetText(
 			FText::FromString(AmmoCountText));
 	}
+	// Cache the carried ammo to be initialized later if the HUD hasn't been set
+	// yet
+	else
+	{
+		bCharacterOverlayNeedsInit = true;
+		HUDCarriedAmmo = Ammo;
+	}
 }
 
 void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
@@ -208,8 +254,8 @@ void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
 	}
 
 	bool bHUDIsValid = BlasterHUD &&
-		BlasterHUD->CharacterOverlay &&
-		BlasterHUD->CharacterOverlay->MatchTimerText;
+		               BlasterHUD->CharacterOverlay &&
+		               BlasterHUD->CharacterOverlay->MatchTimerText;
 
 	if (bHUDIsValid)
 	{
@@ -225,15 +271,62 @@ void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
 	}
 }
 
+void ABlasterPlayerController::SetHUDRemainingAnnouncementTime(float RemainingTime)
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+
+	bool bHUDIsValid = BlasterHUD &&
+		               BlasterHUD->Announcement &&
+		               BlasterHUD->Announcement->WarmupTime;
+
+	if (bHUDIsValid)
+	{
+		// Calculate the minutes and seconds remaining in the announcement counter
+		int32 Minutes = FMath::FloorToInt(RemainingTime / 60.0f);
+		int32 Seconds = FMath::FloorToInt(RemainingTime - (Minutes * 60));
+
+		// Set the text on the announcement counter
+		FString RemainingTimeText =
+			FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		BlasterHUD->Announcement->WarmupTime->SetText(
+			FText::FromString(RemainingTimeText));
+	}
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
-	// Sync up the client and server times
-	uint32 SecondsRemaining = FMath::CeilToInt(MatchTime - GetServerTime());
+	float TimeLeft = 0.0f;
+
+	// Calculate the HUD counters based on the match state. Use GetServerTime()
+	// to sync the counters between server and clients
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		TimeLeft = WarmupTime - GetServerTime() + LevelStartTime;
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		TimeLeft = (WarmupTime + MatchTime) - GetServerTime() + LevelStartTime;
+	}
+
+	uint32 SecondsRemaining = FMath::CeilToInt(TimeLeft);
 
 	if (CountdownInt != SecondsRemaining)
 	{
-		SetHUDRemainingMatchTime(MatchTime - GetServerTime());
+		// Check the match state and set the appropriate counter based on that
+		if (MatchState == MatchState::WaitingToStart)
+		{
+			SetHUDRemainingAnnouncementTime(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress)
+		{
+			SetHUDRemainingMatchTime(TimeLeft);
+		}
 	}
+
 	CountdownInt = SecondsRemaining;
 }
 
@@ -247,13 +340,14 @@ void ABlasterPlayerController::PollInit()
 		{
 			CharacterOverlay = BlasterHUD->CharacterOverlay;
 
-			// Initialize the HUD time and score counters when the overlay is
-			// ready
+			// Initialize the HUD counters when the overlay is ready
 			if (CharacterOverlay)
 			{
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDElimCounter(HUDElims);
+				SetHUDWeaponAmmo(HUDWeaponAmmo);
+				SetHUDCarriedAmmo(HUDCarriedAmmo);
 			}
 		}
 	}
@@ -311,15 +405,14 @@ void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
 
-	// Set the announcement HUD if we're waiting to start
-	if (MatchState == MatchState::WaitingToStart)
-	{
-
-	}
 	// Set the character overlays when the match starts
 	if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
 	}
 }
 
@@ -329,6 +422,10 @@ void ABlasterPlayerController::OnRep_MatchState()
 	if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
 	}
 }
 
@@ -341,12 +438,40 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 	}
 	if (BlasterHUD)
 	{
-		BlasterHUD->AddCharacterOverlay();
+		if (!BlasterHUD->CharacterOverlay)
+		{
+			BlasterHUD->AddCharacterOverlay();
+		}
 
 		// Hide the announcement UI
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		if (!HasAuthority())
+		{
+			return;
+		}
+	}
+}
+
+void ABlasterPlayerController::HandleCooldown()
+{
+	// Make sure we initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+	if (BlasterHUD)
+	{
+		// Get ride of the overlay
+		BlasterHUD->CharacterOverlay->RemoveFromParent();
+
+		// Show the announcement UI again
+		if (BlasterHUD->Announcement)
+		{
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }

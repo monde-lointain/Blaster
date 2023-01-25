@@ -10,6 +10,13 @@
 class ABlasterCharacter;
 class ABlasterPlayerController;
 
+namespace MatchState
+{
+	// Match has ended. Displaying information about who won and starting the
+    // cooldown timer
+	extern BLASTER_API const FName Cooldown;
+}
+
 /**
  *
  */
@@ -36,11 +43,19 @@ public:
 	virtual void RequestRespawn(
 		ACharacter* EliminatedCharacter, AController* EliminatedController);
 
+	/** The total time the match takes. */
+	UPROPERTY(EditDefaultsOnly)
+	float MatchTime = 120.0f;
+
 	/** Time to wait before starting the match */
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.0f;
 
-	/** Time to wait before starting the match */
+	/** Time to wait after ending the match */
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownTime = 10.0f;
+
+	/** Time in seconds in which the level was loaded */
 	float LevelStartTime = 0.0f;
 
 protected:
