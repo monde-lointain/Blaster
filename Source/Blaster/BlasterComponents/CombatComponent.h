@@ -45,6 +45,9 @@ public:
 	/** Updates the ammo count on reload */
 	void UpdateAmmoCounts();
 
+	/** Indicates whether the fire buton has been pressed or not. */
+	bool bFireButtonPressed;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -139,9 +142,6 @@ private:
 	 */
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
-
-	/** Indicates whether the fire buton has been pressed or not. */
-	bool bFireButtonPressed;
 
 	/**
 	 * Factor for how calculating how much the player's HUD crosshairs should be

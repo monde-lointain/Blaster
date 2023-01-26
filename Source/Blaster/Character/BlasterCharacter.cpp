@@ -2,7 +2,6 @@
 
 #include "BlasterCharacter.h"
 
-#include "BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
@@ -10,6 +9,7 @@
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Blaster/Weapon/WeaponTypes.h"
+#include "BlasterAnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
@@ -93,11 +93,16 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Notify the server that we want to replicate the player's weapon class and
-	// current health
+	// Register the overlapping weapon to be replicated by the server
 	DOREPLIFETIME_CONDITION(
 		ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+
+	// Register the player's current health to be replicated by the server
 	DOREPLIFETIME(ABlasterCharacter, CurrentHealth);
+
+	// Register the whether or not to disable gameplay for the current player to
+	// be replicated by the server
+	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
 // Called every frame
@@ -105,9 +110,21 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Handling rotation for characters. Local players will use rotate root bone
-	// with turning in place animations, where simulated proxies will use
-	// simplified rotation
+	RotateInPlace(DeltaTime);
+	HideCameraIfCharacterIsClose();
+	PollInit();
+}
+
+void ABlasterCharacter::RotateInPlace(float DeltaTime)
+{
+	// Disable rotation and turning functionality if we're in the cooldown state
+	if (bDisableGameplay)
+	{
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
 	{
 		AimOffset(DeltaTime);
@@ -129,9 +146,6 @@ void ABlasterCharacter::Tick(float DeltaTime)
 		// Calculate the pitch every frame still
 		CalculateAO_Pitch();
 	}
-
-	HideCameraIfCharacterIsClose();
-	PollInit();
 }
 
 void ABlasterCharacter::OnRep_ReplicatedMovement()
@@ -154,7 +168,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage,
 
 	if (CurrentHealth == 0.0f)
 	{
-		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		ABlasterGameMode* BlasterGameMode =
+			GetWorld()->GetAuthGameMode<ABlasterGameMode>();
 
 		if (BlasterGameMode)
 		{
@@ -162,7 +177,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage,
 			// yet for some reason
 			if (!BlasterPlayerController)
 			{
-				BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+				BlasterPlayerController =
+					Cast<ABlasterPlayerController>(Controller);
 			}
 
 			// Cast the attacker's controller to our custom player controller
@@ -204,11 +220,7 @@ void ABlasterCharacter::Eliminated()
 
 	// Start the respawn timer
 	GetWorldTimerManager().SetTimer(
-		ElimTimer, 
-		this, 
-		&ABlasterCharacter::ElimTimerFinished, 
-		ElimDelay
-	);
+		ElimTimer, this, &ABlasterCharacter::ElimTimerFinished, ElimDelay);
 }
 
 void ABlasterCharacter::MulticastEliminated_Implementation()
@@ -244,11 +256,8 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
 
-	// Disable input
-	if (BlasterPlayerController)
-	{
-		DisableInput(BlasterPlayerController);
-	}
+	// Disable gameplay related actions
+	bDisableGameplay = true;
 
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -292,6 +301,12 @@ void ABlasterCharacter::Destroyed()
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
+	}
+
+	// Destroy the equipped weapon on the character if they don't get dropped
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
 	}
 }
 
@@ -358,8 +373,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(
 		"MoveForward", this, &ABlasterCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(
 		"MoveRight", this, &ABlasterCharacter::MoveRight);
-	PlayerInputComponent->BindAxis(
-		"LookUp", this, &ABlasterCharacter::LookUp);
+	PlayerInputComponent->BindAxis("LookUp", this, &ABlasterCharacter::LookUp);
 	PlayerInputComponent->BindAxis(
 		"LookRight", this, &ABlasterCharacter::LookRight);
 }
@@ -410,7 +424,7 @@ void ABlasterCharacter::PlayReloadMontage()
 
 		switch (Combat->EquippedWeapon->GetWeaponType())
 		{
-		    case EWeaponType::EWT_AssaultRifle:
+			case EWeaponType::EWT_AssaultRifle:
 			{
 				SectionName = FName("Rifle");
 				break;
@@ -451,6 +465,12 @@ void ABlasterCharacter::PlayElimMontage()
 
 void ABlasterCharacter::MoveForward(float Value)
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Controller && Value != 0.0f)
 	{
 		const FRotator YawRotation(
@@ -466,6 +486,12 @@ void ABlasterCharacter::MoveForward(float Value)
 
 void ABlasterCharacter::MoveRight(float Value)
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Controller && Value != 0.0f)
 	{
 		const FRotator YawRotation(
@@ -493,6 +519,12 @@ void ABlasterCharacter::LookRight(float Value)
 // a message to the server through ServerEquipButtonPressed
 void ABlasterCharacter::EquipButtonPressed()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		if (HasAuthority())
@@ -518,6 +550,12 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 
 void ABlasterCharacter::CrouchButtonPressed()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -530,6 +568,12 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		Combat->Reload();
@@ -538,6 +582,12 @@ void ABlasterCharacter::ReloadButtonPressed()
 
 void ABlasterCharacter::AimButtonPressed()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		Combat->SetAiming(true);
@@ -546,6 +596,12 @@ void ABlasterCharacter::AimButtonPressed()
 
 void ABlasterCharacter::AimButtonReleased()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		Combat->SetAiming(false);
@@ -554,6 +610,12 @@ void ABlasterCharacter::AimButtonReleased()
 
 void ABlasterCharacter::FireButtonPressed()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		Combat->FireButtonPressed(true);
@@ -562,6 +624,12 @@ void ABlasterCharacter::FireButtonPressed()
 
 void ABlasterCharacter::FireButtonReleased()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
@@ -616,7 +684,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 
 	CalculateAO_Pitch();
 
-	//if (GEngine)
+	// if (GEngine)
 	//{
 	//	GEngine->AddOnScreenDebugMessage(
 	//		0,
@@ -624,7 +692,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	//		FColor::Green,
 	//		FString::Printf(TEXT("AO_Yaw: %f\nAO_Pitch: %f"), AO_Yaw, AO_Pitch)
 	//	);
-	//}
+	// }
 }
 
 void ABlasterCharacter::CalculateAO_Pitch()
@@ -633,7 +701,7 @@ void ABlasterCharacter::CalculateAO_Pitch()
 	AO_Pitch = GetBaseAimRotation().Pitch;
 
 	// Do the unpacking of the compressed pitch data if it's been sent to us
-	// from the server 
+	// from the server
 	if (AO_Pitch > 90.0f && !IsLocallyControlled())
 	{
 		FVector2D InRange(270.0f, 360.0f);
@@ -672,7 +740,7 @@ void ABlasterCharacter::SimProxiesTurn()
 		ProxyRotationCurrentFrame, ProxyRotationSinceLastFrame)
 				   .Yaw;
 
-	//UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
+	// UE_LOG(LogTemp, Warning, TEXT("ProxyYaw: %f"), ProxyYaw);
 
 	// Turn in place if we've rotated above the required amount
 	if (FMath::Abs(ProxyYaw) > TurnInPlaceThreshold)
@@ -701,6 +769,12 @@ void ABlasterCharacter::SimProxiesTurn()
 
 void ABlasterCharacter::Jump()
 {
+	// Disable this action if true
+	if (bDisableGameplay)
+	{
+		return;
+	}
+
 	// Just stand back up if we're crouching
 	if (bIsCrouched)
 	{
@@ -758,8 +832,7 @@ void ABlasterCharacter::HideCameraIfCharacterIsClose()
 		GetMesh()->SetVisibility(false);
 
 		// Disable visibility on the weapon mesh only for the owner
-		if (Combat && 
-			Combat->EquippedWeapon &&
+		if (Combat && Combat->EquippedWeapon &&
 			Combat->EquippedWeapon->GetWeaponMesh())
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
@@ -770,8 +843,7 @@ void ABlasterCharacter::HideCameraIfCharacterIsClose()
 		GetMesh()->SetVisibility(true);
 
 		// Disable visibility on the weapon mesh only for the owner
-		if (Combat &&
-			Combat->EquippedWeapon &&
+		if (Combat && Combat->EquippedWeapon &&
 			Combat->EquippedWeapon->GetWeaponMesh())
 		{
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;

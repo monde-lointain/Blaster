@@ -2,6 +2,7 @@
 
 #include "BlasterPlayerController.h"
 
+#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/Announcement.h"
@@ -509,8 +510,8 @@ void ABlasterPlayerController::HandleCooldown()
 		BlasterHUD->CharacterOverlay->RemoveFromParent();
 
 		bool bHUDIsValid = BlasterHUD->Announcement &&
-			               BlasterHUD->Announcement->AnnouncementText &&
-			               BlasterHUD->Announcement->InfoText;
+			BlasterHUD->Announcement->AnnouncementText &&
+			BlasterHUD->Announcement->InfoText;
 
 		// Display the post-match announcement UI
 		if (bHUDIsValid)
@@ -522,6 +523,20 @@ void ABlasterPlayerController::HandleCooldown()
 
 			// Hide the info text
 			BlasterHUD->Announcement->InfoText->SetText(FText());
+		}
+	}
+
+	// Disable gameplay for the local player only
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->bDisableGameplay = true;
+
+		// Stop firing when we stop the game
+		if (BlasterCharacter->Combat)
+		{
+			BlasterCharacter->Combat->bFireButtonPressed = false;
 		}
 	}
 }

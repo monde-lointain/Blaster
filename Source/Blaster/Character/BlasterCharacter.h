@@ -35,6 +35,13 @@ public:
 	/** Called every frame */
 	virtual void Tick(float DeltaTime) override;
 
+	/**
+	 * Handling rotation for characters. Local players will use rotate root bone
+	 * with turning in place animations, where simulated proxies will use
+	 * simplified rotation
+	 */
+	void RotateInPlace(float DeltaTime);
+
 	/** Called when the game starts or when spawned */
 	virtual void SetupPlayerInputComponent(
 		class UInputComponent* PlayerInputComponent) override;
@@ -95,6 +102,24 @@ public:
 	 */
 	void PollInit();
 
+	/**
+	 * Flag for whether to disable gameplay related actions, such as moving and
+	 * shooting
+	 */
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
+	/**
+	 * Represents the controller the player is currently using. Used for
+	 * accessing the HUD in the character class
+	 */
+	UPROPERTY()
+	ABlasterPlayerController* BlasterPlayerController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,
+		meta = (AllowPrivateAccess = "true"))
+	UCombatComponent* Combat;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
@@ -140,10 +165,6 @@ private:
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,
-		meta = (AllowPrivateAccess = "true"))
-	UCombatComponent* Combat;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -209,13 +230,6 @@ private:
 	/** Replication notify for health */
 	UFUNCTION()
 	void OnRep_Health();
-
-	/**
-	 * Represents the controller the player is currently using. Used for
-	 * accessing the HUD in the character class
-	 */
-	UPROPERTY()
-	ABlasterPlayerController* BlasterPlayerController;
 
 	/** Represents the current state of the player */
 	UPROPERTY()
