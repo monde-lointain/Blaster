@@ -258,6 +258,12 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 
 	// Disable gameplay related actions
 	bDisableGameplay = true;
+	
+	// Stop firing when eliminated
+	if (Combat)
+	{
+		Combat->bFireButtonPressed = false;
+	}
 
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -303,8 +309,15 @@ void ABlasterCharacter::Destroyed()
 		ElimBotComponent->DestroyComponent();
 	}
 
-	// Destroy the equipped weapon on the character if they don't get dropped
-	if (Combat && Combat->EquippedWeapon)
+	ABlasterGameMode* BlasterGameMode =
+		Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+
+	bool bMatchEnded = BlasterGameMode &&
+					   BlasterGameMode->GetMatchState() != MatchState::InProgress;
+
+	// Destroy the equipped weapon on the character if it doesn't get dropped
+	// when the level gets reset
+	if (Combat && Combat->EquippedWeapon && bMatchEnded)
 	{
 		Combat->EquippedWeapon->Destroy();
 	}

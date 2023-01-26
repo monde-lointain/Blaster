@@ -3,6 +3,7 @@
 #include "BlasterGameMode.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "GameFramework/PlayerStart.h"
@@ -101,11 +102,16 @@ void ABlasterGameMode::PlayerEliminated(
 		? Cast<ABlasterPlayerState>(EliminatedController->PlayerState)
 		: nullptr;
 
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+
 	// Increment the attacking player's score if they didn't eliminate
-	// themselves
-	if (AttackerPlayerState && AttackerPlayerState != EliminatedPlayerState)
+	// themselves and check to see if they're the new top scorer
+	if (AttackerPlayerState && 
+		AttackerPlayerState != EliminatedPlayerState &&
+		BlasterGameState)
 	{
 		AttackerPlayerState->AddToScore(1.0f);
+		BlasterGameState->UpdateTopScore(AttackerPlayerState);
 	}
 
 	// Increment the eliminated player's elim count

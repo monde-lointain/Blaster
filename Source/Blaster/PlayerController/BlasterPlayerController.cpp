@@ -5,9 +5,11 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/HUD/Announcement.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
@@ -521,8 +523,55 @@ void ABlasterPlayerController::HandleCooldown()
 			BlasterHUD->Announcement->AnnouncementText->SetText(
 				FText::FromString(AnnouncementText));
 
-			// Hide the info text
-			BlasterHUD->Announcement->InfoText->SetText(FText());
+			// Display the top scoring player
+			ABlasterGameState* BlasterGameState =
+				Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+			ABlasterPlayerState* BlasterPlayerState =
+				GetPlayerState<ABlasterPlayerState>();
+
+			if (BlasterGameState && BlasterPlayerState)
+			{
+				TArray<ABlasterPlayerState*> TopPlayers =
+					BlasterGameState->TopScoringPlayers;
+
+				FString WinnerTextString;
+
+				if (TopPlayers.IsEmpty())
+				{
+					WinnerTextString = FString("Tie");
+				}
+				// If only one player is in the room and if the winning player
+				// is the current player
+				else if (TopPlayers.Num() == 1 &&
+					TopPlayers[0] == BlasterPlayerState)
+				{
+					WinnerTextString = FString("You are the winner!");
+				}
+				// If only one player is in the room and if the winning player
+				// is NOT the current player
+				else if (TopPlayers.Num() == 1)
+				{
+					WinnerTextString = FString::Printf(
+						TEXT("Winner:\n%s"), *TopPlayers[0]->GetPlayerName());
+				}
+				// If there is a tie between two or more players
+				else if (TopPlayers.Num() > 1)
+				{
+					WinnerTextString = FString("Winners:\n");
+
+					// Append the names of all tied players to the winner text string
+					for (auto& TiedPlayer : TopPlayers)
+					{
+						FString TiedPlayerString = FString::Printf(
+							TEXT("%s\n"), *TiedPlayer->GetPlayerName());
+						WinnerTextString.Append(TiedPlayerString);
+					}
+				}
+
+				// Set the info text
+				BlasterHUD->Announcement->WinnerText->SetText(
+					FText::FromString(WinnerTextString));
+			}
 		}
 	}
 

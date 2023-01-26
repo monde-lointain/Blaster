@@ -29,4 +29,8 @@ public:
 	/** Text widget with the wait screen controls */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* InfoText;
+
+	/** Text widget displayed after the match with the match winners */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WinnerText;
 };
