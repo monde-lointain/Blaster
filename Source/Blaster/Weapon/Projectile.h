@@ -41,8 +41,11 @@ protected:
 		UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
 		const FHitResult& HitResult);
 
-	/** Damage done by the projectile */
-	UPROPERTY(EditAnywhere)
+	/**
+	 * Damage done by the projectile. For rockets this is the maximum damage
+	 * dealt when an actor is within the inner radius
+	 */
+	UPROPERTY(EditAnywhere, Category = Damage)
 	float Damage = 20.0f;
 
 private:

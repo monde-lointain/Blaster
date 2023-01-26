@@ -30,7 +30,15 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* InfoText;
 
+	/** Text widget displayed after the match with the match result */
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ResultText;
+
 	/** Text widget displayed after the match with the match winners */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* WinnerText;
+
+	/** The color of the result or winner text */
+	UPROPERTY(BlueprintReadOnly)
+	FLinearColor ResultTextColor;
 };

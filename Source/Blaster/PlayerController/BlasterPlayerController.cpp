@@ -130,6 +130,9 @@ void ABlasterPlayerController::SetHUDHealth(
 			FString::Printf(TEXT("%d"), FMath::CeilToInt(CurrentHealth));
 		BlasterHUD->CharacterOverlay->HealthText->SetText(
 			FText::FromString(HealthText));
+
+		// Update the health bar color
+		SetHUDHealthColor(HealthPercent);
 	}
 	// Cache the health to be initialized later if the HUD hasn't been set yet
 	else
@@ -137,6 +140,23 @@ void ABlasterPlayerController::SetHUDHealth(
 		bCharacterOverlayNeedsInit = true;
 		HUDHealth = CurrentHealth;
 		HUDMaxHealth = MaxHealth;
+	}
+}
+
+void ABlasterPlayerController::SetHUDHealthColor(float HealthPercent)
+{
+	if (HealthPercent > 0.5)
+	{
+		BlasterHUD->CharacterOverlay->HealthColor = FLinearColor::Green;
+	}
+	else if (HealthPercent > 0.25)
+	{
+		BlasterHUD->CharacterOverlay->HealthColor = FLinearColor::Yellow;
+			//FLinearColor(1.0f, 0.843137f, 0.0f); // Gold
+	}
+	else
+	{
+		BlasterHUD->CharacterOverlay->HealthColor = FLinearColor::Red;
 	}
 }
 
@@ -267,7 +287,8 @@ void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
 	if (bHUDIsValid)
 	{
 		// Hide the countdown text to prevent negative values from showing
-		if (RemainingTime < 0.0f)
+		if (BlasterHUD->CharacterOverlay->MatchTimerText &&
+			RemainingTime < 0.0f)
 		{
 			BlasterHUD->CharacterOverlay->MatchTimerText->SetText(FText());
 			return;
@@ -282,6 +303,16 @@ void ABlasterPlayerController::SetHUDRemainingMatchTime(float RemainingTime)
 			FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		BlasterHUD->CharacterOverlay->MatchTimerText->SetText(
 			FText::FromString(RemainingTimeText));
+
+		// Start the urgent text animation when the timer goes under 30 seconds
+		if (BlasterHUD->CharacterOverlay->UrgentText && 
+			Minutes == 0 &&
+			Seconds < 30)
+		{
+			BlasterHUD->CharacterOverlay->PlayAnimation(
+				BlasterHUD->CharacterOverlay->UrgentText);
+		}
+
 	}
 }
 
@@ -523,55 +554,8 @@ void ABlasterPlayerController::HandleCooldown()
 			BlasterHUD->Announcement->AnnouncementText->SetText(
 				FText::FromString(AnnouncementText));
 
-			// Display the top scoring player
-			ABlasterGameState* BlasterGameState =
-				Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
-			ABlasterPlayerState* BlasterPlayerState =
-				GetPlayerState<ABlasterPlayerState>();
-
-			if (BlasterGameState && BlasterPlayerState)
-			{
-				TArray<ABlasterPlayerState*> TopPlayers =
-					BlasterGameState->TopScoringPlayers;
-
-				FString WinnerTextString;
-
-				if (TopPlayers.IsEmpty())
-				{
-					WinnerTextString = FString("Tie");
-				}
-				// If only one player is in the room and if the winning player
-				// is the current player
-				else if (TopPlayers.Num() == 1 &&
-					TopPlayers[0] == BlasterPlayerState)
-				{
-					WinnerTextString = FString("You are the winner!");
-				}
-				// If only one player is in the room and if the winning player
-				// is NOT the current player
-				else if (TopPlayers.Num() == 1)
-				{
-					WinnerTextString = FString::Printf(
-						TEXT("Winner:\n%s"), *TopPlayers[0]->GetPlayerName());
-				}
-				// If there is a tie between two or more players
-				else if (TopPlayers.Num() > 1)
-				{
-					WinnerTextString = FString("Winners:\n");
-
-					// Append the names of all tied players to the winner text string
-					for (auto& TiedPlayer : TopPlayers)
-					{
-						FString TiedPlayerString = FString::Printf(
-							TEXT("%s\n"), *TiedPlayer->GetPlayerName());
-						WinnerTextString.Append(TiedPlayerString);
-					}
-				}
-
-				// Set the info text
-				BlasterHUD->Announcement->WinnerText->SetText(
-					FText::FromString(WinnerTextString));
-			}
+			// Display the top scoring player(s)
+			DisplayWinnerText();
 		}
 	}
 
@@ -587,5 +571,67 @@ void ABlasterPlayerController::HandleCooldown()
 		{
 			BlasterCharacter->Combat->bFireButtonPressed = false;
 		}
+	}
+}
+
+void ABlasterPlayerController::DisplayWinnerText()
+{
+	ABlasterGameState* BlasterGameState =
+		Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+	ABlasterPlayerState* BlasterPlayerState =
+		GetPlayerState<ABlasterPlayerState>();
+
+	if (BlasterGameState && BlasterPlayerState)
+	{
+		TArray<ABlasterPlayerState*> TopPlayers =
+			BlasterGameState->TopScoringPlayers;
+
+		FString ResultTextString;
+		FString WinnerTextString;
+
+		if (TopPlayers.IsEmpty())
+		{
+			BlasterHUD->Announcement->ResultTextColor = FLinearColor::White;
+			ResultTextString = FString("Tie.");
+			WinnerTextString = FString();
+		}
+		// If only one player won and if the winning player is the current
+		// player
+		else if (TopPlayers.Num() == 1 && TopPlayers[0] == BlasterPlayerState)
+		{
+			BlasterHUD->Announcement->ResultTextColor = FLinearColor::Blue;
+			ResultTextString = FString("You are the winner!");
+			WinnerTextString = FString();
+		}
+		// If only one player won and if the winning player is NOT the current
+		// player
+		else if (TopPlayers.Num() == 1)
+		{
+			BlasterHUD->Announcement->ResultTextColor = FLinearColor::White;
+			ResultTextString = FString("Winner:");
+			WinnerTextString =
+				FString::Printf(TEXT("%s"), *TopPlayers[0]->GetPlayerName());
+		}
+		// If there is a tie between two or more players
+		else if (TopPlayers.Num() > 1)
+		{
+			BlasterHUD->Announcement->ResultTextColor = FLinearColor::White;
+			ResultTextString = FString("Winners:");
+			WinnerTextString = FString();
+
+			// Append the names of all tied players to the winner text string
+			for (auto& TiedPlayer : TopPlayers)
+			{
+				FString TiedPlayerString =
+					FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName());
+				ResultTextString.Append(TiedPlayerString);
+			}
+		}
+
+		// Set the result text and winner text
+		BlasterHUD->Announcement->ResultText->SetText(
+			FText::FromString(ResultTextString));
+		BlasterHUD->Announcement->WinnerText->SetText(
+			FText::FromString(WinnerTextString));
 	}
 }

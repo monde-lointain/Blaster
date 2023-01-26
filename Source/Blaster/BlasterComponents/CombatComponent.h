@@ -223,6 +223,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = StartingAmmo)
 	int AssaultRifleStartAmmo = 30;
 
+	/** Starting ammo for rocket launchers  */
+	UPROPERTY(EditAnywhere, Category = StartingAmmo)
+	int RocketLauncherStartAmmo = 0;
+
 	/**
 	 * Sets the carried ammo amounts for each weapon type to their starting
 	 * values

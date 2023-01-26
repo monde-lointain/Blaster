@@ -9,6 +9,7 @@
 
 class UProgressBar;
 class UTextBlock;
+class UWidgetAnimation;
 
 /**
  *
@@ -22,6 +23,10 @@ public:
 	/** Player health bar widget */
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HealthBar;
+
+	/** The color of the health text and health bar */
+	UPROPERTY(BlueprintReadOnly)
+	FLinearColor HealthColor;
 
 	/** Player current health text widget */
 	UPROPERTY(meta = (BindWidget))
@@ -46,4 +51,8 @@ public:
 	/** Text widget for the remaining match time */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchTimerText;
+
+	/** Animation that plays when the remaining match time is under 30 seconds */
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* UrgentText;
 };

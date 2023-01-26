@@ -23,6 +23,12 @@ public:
 	/** Updates the health bar on the HUD widget */
 	void SetHUDHealth(float CurrentHealth, float MaxHealth);
 
+	/**
+	 * Sets the color of the health bar widget based on the player's current
+	 * health
+	 */
+	void SetHUDHealthColor(float HealthPercent);
+
 	/** Updates the score counter on the HUD widget */
 	void SetHUDScore(float Score);
 
@@ -69,6 +75,8 @@ public:
 	void HandleMatchHasStarted();
 
 	void HandleCooldown();
+
+	void DisplayWinnerText();
 
 protected:
 	/** Called when the game starts or when spawned */
