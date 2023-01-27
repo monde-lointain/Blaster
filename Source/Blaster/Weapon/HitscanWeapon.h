@@ -21,6 +21,8 @@ public:
 	/** Handles elements of firing assigned to the weapon */
 	virtual void Fire(const FVector& HitTarget);
 
+	void HandleWeaponLineTrace(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
+
 	/** The damage dealt by the weapon */
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.0f;
@@ -28,4 +30,8 @@ public:
 	/** Particles spawned by the weapon upon impact */
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
+
+	/** Particles for the beam particle effects appearing behind the bullet */
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BeamParticles;
 };
