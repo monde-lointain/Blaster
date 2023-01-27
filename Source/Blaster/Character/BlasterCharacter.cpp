@@ -454,6 +454,12 @@ void ABlasterCharacter::PlayReloadMontage()
 				SectionName = FName("Rifle");
 				break;
 			}
+			case EWeaponType::EWT_SubmachineGun:
+			{
+				// TODO: Add a proper smg reloading animation
+				SectionName = FName("Rifle");
+				break;
+			}
 		}
 
 		AnimInstance->Montage_JumpToSection(SectionName);

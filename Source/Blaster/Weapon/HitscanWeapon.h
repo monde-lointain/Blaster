@@ -34,4 +34,16 @@ public:
 	/** Particles for the beam particle effects appearing behind the bullet */
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BeamParticles;
+
+	/** Particles for the muzzle flash */
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* MuzzleFlash;
+
+	/** Sound that plays upon firing */
+	UPROPERTY(EditAnywhere)
+	USoundCue* FireSound;
+
+	/** Sound that plays upon impact */
+	UPROPERTY(EditAnywhere)
+	USoundCue* ImpactSound;
 };

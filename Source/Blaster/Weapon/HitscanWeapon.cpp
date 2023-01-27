@@ -6,6 +6,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Sound/SoundCue.h"
 
 void AHitscanWeapon::Fire(const FVector& HitTarget)
 {
@@ -56,7 +57,15 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 			);
 		}
 
-		// Spawn the impact particles for both server and clients
+		// Play particles and sound effects on all clients
+		if (MuzzleFlash)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				MuzzleFlash, 
+				SocketTransform
+			);
+		}
 		if (ImpactParticles)
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(
@@ -64,6 +73,22 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 				ImpactParticles,
 				FireHit.ImpactPoint,
 				FireHit.ImpactNormal.Rotation()
+			);
+		}
+		if (FireSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				FireSound,
+				GetActorLocation()
+			);
+		}
+		if (ImpactSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				ImpactSound,
+				FireHit.ImpactPoint
 			);
 		}
 	}
@@ -76,7 +101,6 @@ void AHitscanWeapon::HandleWeaponLineTrace(
 
 	if (World)
 	{
-
 		World->LineTraceSingleByChannel(
 			OutHit, 
 			TraceStart, 
