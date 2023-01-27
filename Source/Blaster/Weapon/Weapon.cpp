@@ -16,7 +16,10 @@
 AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	// Set replication properties
 	bReplicates = true;
+	SetReplicateMovement(true);
 
 	// Initialize the weapon mesh
 	WeaponMesh =

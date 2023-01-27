@@ -5,7 +5,6 @@
 #include "Blaster/Blaster.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -17,9 +16,11 @@ AProjectile::AProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
+	// Initialize the collider
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	SetRootComponent(CollisionBox);
 
+	// Set collision properties
 	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionBox->SetCollisionResponseToAllChannels(
@@ -30,12 +31,6 @@ AProjectile::AProjectile()
 		ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(
 		ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
-
-	ProjectileMovementComponent =
-		CreateDefaultSubobject<UProjectileMovementComponent>(
-			TEXT("ProjectileMovementComponent"));
-
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 }
 
 // Called when the game starts or when spawned

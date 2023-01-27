@@ -9,6 +9,7 @@
 
 class UNiagaraSystem;
 class UNiagaraComponent;
+class URocketMovementComponent;
 
 /**
  *
@@ -20,6 +21,10 @@ class BLASTER_API AProjectileRocket : public AProjectile
 
 public:
 	AProjectileRocket();
+
+	/** Handles movement for the rocket */
+	UPROPERTY(VisibleAnywhere)
+	URocketMovementComponent* RocketMovementComponent;
 
 	/** The minimum damage dealt by the rocket */
 	UPROPERTY(EditDefaultsOnly, Category = Damage)

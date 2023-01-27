@@ -2,6 +2,7 @@
 
 #include "ProjectileRocket.h"
 
+#include "RocketMovementComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/AudioComponent.h"
@@ -17,6 +18,13 @@ AProjectileRocket::AProjectileRocket()
 
 	// Disable collision
 	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Initialize the rocket movement component
+	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(
+		TEXT("RocketMovementComponent"));
+
+	RocketMovementComponent->bRotationFollowsVelocity = true;
+	RocketMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectileRocket::BeginPlay()
@@ -71,6 +79,12 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent,
 	AActor* OtherActor, UPrimitiveComponent* OtherComponent,
 	FVector NormalImpulse, const FHitResult& HitResult)
 {
+	// Ignore the owner actor
+	if (OtherActor == GetOwner())
+	{
+		return;
+	}
+
 	APawn* InstigatorPawn = GetInstigator();
 
 	// Apply damage only on the server
