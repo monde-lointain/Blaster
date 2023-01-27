@@ -512,6 +512,7 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 	}
 	if (BlasterHUD)
 	{
+		// Only add the overlay if it hasn't been initialized
 		if (!BlasterHUD->CharacterOverlay)
 		{
 			BlasterHUD->AddCharacterOverlay();

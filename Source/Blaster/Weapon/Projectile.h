@@ -31,16 +31,6 @@ public:
 	 */
 	virtual void Destroyed() override;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	/** Handles the projectile's behavior on impact */
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
-		const FHitResult& HitResult);
-
 	/**
 	 * Damage done by the projectile. For rockets this is the maximum damage
 	 * dealt when an actor is within the inner radius
@@ -48,7 +38,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Damage)
 	float Damage = 20.0f;
 
-private:
 	/** The collision bounding box for the projectile */
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* CollisionBox;
@@ -72,4 +61,14 @@ private:
 	/** Sound that plays upon projectile impact */
 	UPROPERTY(EditAnywhere)
 	USoundCue* ImpactSound;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	/** Handles the projectile's behavior on impact. */
+	UFUNCTION()
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComponent, FVector NormalImpulse,
+		const FHitResult& HitResult);
 };

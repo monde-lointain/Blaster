@@ -56,7 +56,7 @@ void AProjectile::BeginPlay()
 		);
 	}
 
-	// Binding delegates
+	// Bind the OnHit delegate to the server only
 	if (HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(
