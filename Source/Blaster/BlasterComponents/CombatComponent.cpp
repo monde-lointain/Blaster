@@ -324,6 +324,7 @@ void UCombatComponent::InitializeCarriedAmmo()
 	// Initialize the ammo for all the different weapon types
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, AssaultRifleStartAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, RocketLauncherStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, PistolStartAmmo);
 }
 
 // When a client calls this server RPC, the server will execute its multicast

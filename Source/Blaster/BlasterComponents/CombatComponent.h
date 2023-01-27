@@ -227,6 +227,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = StartingAmmo)
 	int RocketLauncherStartAmmo = 0;
 
+	/** Starting ammo for pistols  */
+	UPROPERTY(EditAnywhere, Category = StartingAmmo)
+	int PistolStartAmmo = 0;
+
 	/**
 	 * Sets the carried ammo amounts for each weapon type to their starting
 	 * values
