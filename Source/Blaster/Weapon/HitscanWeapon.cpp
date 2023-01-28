@@ -2,9 +2,11 @@
 
 #include "HitscanWeapon.h"
 
+#include "WeaponTypes.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 
@@ -92,6 +94,28 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 			);
 		}
 	}
+}
+
+FVector AHitscanWeapon::TraceEndWithScatter(
+	const FVector& TraceStart, const FVector& HitTarget)
+{
+	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+
+	// Generate a random point within the sphere
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector()
+					  * FMath::FRandRange(0.0f, SphereRadius);
+	FVector EndLoc = SphereCenter + RandVec;
+
+	// Vector from start of linetrace to random endpoint
+	FVector ToEndLoc = EndLoc - TraceStart;
+
+	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.0f, 12, FColor::Orange, true);
+
+	FVector Result(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+	DrawDebugLine(GetWorld(), TraceStart, Result, FColor::White, true);
+	return Result;
 }
 
 void AHitscanWeapon::HandleWeaponLineTrace(

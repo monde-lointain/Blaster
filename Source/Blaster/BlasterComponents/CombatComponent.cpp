@@ -326,6 +326,7 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, RocketLauncherStartAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, PistolStartAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, SubmachineGunStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, ShotgunStartAmmo);
 }
 
 // When a client calls this server RPC, the server will execute its multicast
@@ -380,7 +381,6 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	// Perform a line trace starting from the center of the screen
 	if (bDeprojectionSuccessful)
 	{
-		const float LINETRACE_LENGTH = 80000.0f;
 		FVector Start = CrosshairWorldPosition;
 
 		// Push the start of the linetrace forward just beyond our character
@@ -402,7 +402,7 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		}
 
 		FVector End = CrosshairWorldPosition +
-					  (CrosshairWorldDirection * LINETRACE_LENGTH);
+					  (CrosshairWorldDirection * TRACE_LENGTH);
 
 		GetWorld()->LineTraceSingleByChannel(
 			TraceHitResult, 

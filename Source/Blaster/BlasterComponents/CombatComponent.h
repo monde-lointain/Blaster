@@ -235,6 +235,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = StartingAmmo)
 	int SubmachineGunStartAmmo = 0;
 
+	/** Starting ammo for shotguns  */
+	UPROPERTY(EditAnywhere, Category = StartingAmmo)
+	int ShotgunStartAmmo = 0;
+
 	/**
 	 * Sets the carried ammo amounts for each weapon type to their starting
 	 * values

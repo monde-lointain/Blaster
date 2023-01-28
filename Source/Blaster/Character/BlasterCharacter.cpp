@@ -442,21 +442,24 @@ void ABlasterCharacter::PlayReloadMontage()
 				SectionName = FName("Rifle");
 				break;
 			}
+			/** TODO: Add proper reloading animations for the other weapons! */
 			case EWeaponType::EWT_RocketLauncher:
 			{
-				// TODO: Add a proper rocket reloading animation
 				SectionName = FName("Rifle");
 				break;
 			}
 			case EWeaponType::EWT_Pistol:
 			{
-				// TODO: Add a proper pistol reloading animation
 				SectionName = FName("Rifle");
 				break;
 			}
 			case EWeaponType::EWT_SubmachineGun:
 			{
-				// TODO: Add a proper smg reloading animation
+				SectionName = FName("Rifle");
+				break;
+			}
+			case EWeaponType::EWT_Shotgun:
+			{
 				SectionName = FName("Rifle");
 				break;
 			}
