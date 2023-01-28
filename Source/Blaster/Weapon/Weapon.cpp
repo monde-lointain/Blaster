@@ -179,8 +179,6 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			// We only need to disable collision for the area sphere on the
 			// server because overlap events only occur on it
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-			// Disable physics on the weapon when the player equips it
 			SetWeaponPhysicsEnabled(false);
 			break;
 		}
@@ -234,12 +232,29 @@ void AWeapon::SetWeaponPhysicsEnabled(bool bPhysicsEnabled)
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		// Block all channels except for the pawn and camera
+		WeaponMesh->SetCollisionResponseToAllChannels(
+			ECollisionResponse::ECR_Block);
+		WeaponMesh->SetCollisionResponseToChannel(
+			ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCollisionResponseToChannel(
+			ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	}
 	else
 	{
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// For submachine guns, enable the parts of the physics simulation that
+		// will allow the strap to be affected by physics
+		if (WeaponType == EWeaponType::EWT_SubmachineGun)
+		{
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
 	}
 }
 
