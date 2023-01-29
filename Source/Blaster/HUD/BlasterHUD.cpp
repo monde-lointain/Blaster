@@ -4,6 +4,7 @@
 
 #include "Announcement.h"
 #include "CharacterOverlay.h"
+#include "SniperScope.h"
 
 void ABlasterHUD::BeginPlay()
 {
@@ -35,6 +36,20 @@ void ABlasterHUD::AddAnnouncement()
 		Announcement =
 			CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
 		Announcement->AddToViewport();
+	}
+}
+
+void ABlasterHUD::AddSniperScope()
+{
+	// Check to see if the player controller and the sniper scope class are
+	// valid, then create the sniper scope overlay and add it to the viewport
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && SniperScopeClass)
+	{
+		SniperScope =
+			CreateWidget<USniperScope>(PlayerController, SniperScopeClass);
+		SniperScope->AddToViewport();
 	}
 }
 

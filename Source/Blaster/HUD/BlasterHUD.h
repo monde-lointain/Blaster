@@ -10,6 +10,7 @@
 class UTexture2D;
 class UCharacterOverlay;
 class UAnnouncement;
+class USniperScope;
 
 USTRUCT(BlueprintType)
 struct FHUDPackage
@@ -53,6 +54,10 @@ public:
 	UPROPERTY()
 	UAnnouncement* Announcement;
 
+	/** Widget for the sniper scope overlay */
+	UPROPERTY()
+	USniperScope* SniperScope;
+
 	/** Class for the player's character overlay */
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
@@ -61,11 +66,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = Announcements)
 	TSubclassOf<UUserWidget> AnnouncementClass;
 
+	/** Class for the announcement widget */
+	UPROPERTY(EditAnywhere, Category = SniperScope)
+	TSubclassOf<UUserWidget> SniperScopeClass;
+
 	/** Initializes the character overlay */
 	void AddCharacterOverlay();
 
 	/** Initializes the announcement UI */
 	void AddAnnouncement();
+
+	/** Initializes the sniper scoper overlay */
+	void AddSniperScope();
 
 protected:
 	virtual void BeginPlay() override;

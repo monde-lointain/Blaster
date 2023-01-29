@@ -207,6 +207,11 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 void UCombatComponent::SetAiming(bool bAiming)
 {
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}
+
 	bIsAiming = bAiming;
 	ServerSetAiming(bAiming);
 
@@ -214,6 +219,33 @@ void UCombatComponent::SetAiming(bool bAiming)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed =
 			bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+
+	// Play the zoom animation effects when zooming in and out with the sniper
+	// rifle
+	if (Character->IsLocallyControlled() &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		if (!Controller)
+		{
+			Controller = Cast<ABlasterPlayerController>(Character->Controller);
+		}
+		
+		if (Controller)
+		{
+			// Bring up the HUD widget
+			Controller->SetHUDSniperScope(bIsAiming);
+
+			// Play the sound effects
+			if (bIsAiming)
+			{
+				UGameplayStatics::PlaySound2D(this, ZoomInSniperRifle);
+			}
+			else
+			{
+				UGameplayStatics::PlaySound2D(this, ZoomOutSniperRifle);
+			}
+		}
 	}
 }
 
@@ -327,6 +359,7 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, SubmachineGunStartAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, ShotgunStartAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, SniperRifleStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, GrenadeLauncherStartAmmo);
 }
 
 // When a client calls this server RPC, the server will execute its multicast

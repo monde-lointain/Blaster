@@ -9,6 +9,7 @@
 #include "Blaster/HUD/Announcement.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
+#include "Blaster/HUD/SniperScope.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -346,6 +347,45 @@ void ABlasterPlayerController::SetHUDRemainingAnnouncementTime(float RemainingTi
 			FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		BlasterHUD->Announcement->WarmupTime->SetText(
 			FText::FromString(RemainingTimeText));
+	}
+}
+
+void ABlasterPlayerController::SetHUDSniperScope(bool bIsAiming)
+{
+	// Initialize the HUD in case it hasn't been initialized yet
+	if (!BlasterHUD)
+	{
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	}
+ 
+	bool bHUDIsValid = BlasterHUD &&
+		               BlasterHUD->SniperScope &&
+		               BlasterHUD->SniperScope->ScopeZoomIn;
+
+	// Initialize the sniper scope if it hasn't been initialized yet
+	if (!BlasterHUD->SniperScope)
+	{
+		BlasterHUD->AddSniperScope();
+	}
+ 
+	if (bHUDIsValid)
+	{
+		// Zooming in
+		if (bIsAiming)
+		{
+			BlasterHUD->SniperScope->PlayAnimation(
+				BlasterHUD->SniperScope->ScopeZoomIn);
+		}
+		// Zooming out, play in reverse
+		else
+		{
+			BlasterHUD->SniperScope->PlayAnimation(
+				BlasterHUD->SniperScope->ScopeZoomIn, 
+				0.f, 
+				1,
+				EUMGSequencePlayMode::Reverse
+			);
+		}
 	}
 }
 

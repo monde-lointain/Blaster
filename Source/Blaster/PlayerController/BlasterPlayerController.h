@@ -47,6 +47,9 @@ public:
 	/** Updates the time remaining counter on the announcement HUD timer */
 	void SetHUDRemainingAnnouncementTime(float RemainingTime);
 
+	/** Brings up the sniper scope widget on the HUD */
+	void SetHUDSniperScope(bool bIsAiming);
+
 	/** Called when a player possesses a pawn */
 	virtual void OnPossess(APawn* InPawn) override;
 

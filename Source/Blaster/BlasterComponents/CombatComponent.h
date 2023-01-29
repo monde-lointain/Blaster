@@ -191,6 +191,14 @@ private:
 	/** Interpolates FOV when aiming */
 	void InterpFOV(float DeltaTime);
 
+	/** Sound that plays on sniper rifle zoom in */
+	UPROPERTY(EditAnywhere, Category = SniperRifleSounds)
+	USoundBase* ZoomInSniperRifle;
+
+	/** Sound that plays on sniper rifle zoom out */
+	UPROPERTY(EditAnywhere, Category = SniperRifleSounds)
+	USoundBase* ZoomOutSniperRifle;
+
 	/** Indicates whether the player can fire or not */
 	bool bCanFire = true;
 
@@ -242,6 +250,10 @@ private:
 	/** Starting ammo for sniper rifles  */
 	UPROPERTY(EditAnywhere, Category = StartingAmmo)
 	int SniperRifleStartAmmo = 0;
+
+	/** Starting ammo for sniper rifles  */
+	UPROPERTY(EditAnywhere, Category = StartingAmmo)
+	int GrenadeLauncherStartAmmo = 0;
 
 	/**
 	 * Sets the carried ammo amounts for each weapon type to their starting
