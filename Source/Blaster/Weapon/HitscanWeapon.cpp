@@ -31,23 +31,20 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 
 	if (MuzzleFlashSocket)
 	{
-		// Compute the starting and end points of our linetrace
+		// Compute the start point of the linetrace (end with scatter gets
+		// handled in HandleWeaponLineTrace)
 		FTransform SocketTransform =
 			MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
-		// Push the trace endpoint further back a bit so it's just slightly past
-		// the object we're looking at
-		FVector End = Start + (HitTarget - Start) * 1.25f;
 
 		// Perform the linetrace
 		FHitResult FireHit;
-		HandleWeaponLineTrace(Start, End, FireHit);
+		HandleWeaponLineTrace(Start, HitTarget, FireHit);
 
-		// Check to see if we've hit another player
+		// Check to see if we've hit another player (only done on the server!)
 		ABlasterCharacter* BlasterCharacter =
 			Cast<ABlasterCharacter>(FireHit.GetActor());
 
-		// If we hit another character (only done on the server!)
 		if (BlasterCharacter && HasAuthority() && InstigatorController)
 		{
 			UGameplayStatics::ApplyDamage(
@@ -59,7 +56,7 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 			);
 		}
 
-		// Play particles and sound effects on all clients
+		// Play particles and sound effects on both server and clients
 		if (MuzzleFlash)
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(
@@ -96,38 +93,20 @@ void AHitscanWeapon::Fire(const FVector& HitTarget)
 	}
 }
 
-FVector AHitscanWeapon::TraceEndWithScatter(
-	const FVector& TraceStart, const FVector& HitTarget)
-{
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-
-	// Generate a random point within the sphere
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector()
-					  * FMath::FRandRange(0.0f, SphereRadius);
-	FVector EndLoc = SphereCenter + RandVec;
-
-	// Vector from start of linetrace to random endpoint
-	FVector ToEndLoc = EndLoc - TraceStart;
-
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.0f, 12, FColor::Orange, true);
-
-	FVector Result(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-	DrawDebugLine(GetWorld(), TraceStart, Result, FColor::White, true);
-	return Result;
-}
-
 void AHitscanWeapon::HandleWeaponLineTrace(
-	const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit)
+	const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
 {
 	UWorld* World = GetWorld();
 
 	if (World)
 	{
+		// Compute the end point of the trace if we're using scatter
+		FVector TraceEnd = bUseScatter
+							   ? TraceEndWithScatter(TraceStart, HitTarget)
+							   : TraceStart + (HitTarget - TraceStart) * 1.25f;
 		World->LineTraceSingleByChannel(
-			OutHit, 
-			TraceStart, 
+			OutHit,
+			TraceStart,
 			TraceEnd,
 			ECollisionChannel::ECC_Visibility
 		);
@@ -151,10 +130,10 @@ void AHitscanWeapon::HandleWeaponLineTrace(
 			// Store so we can set the endpoint
 			UParticleSystemComponent* Beam =
 				UGameplayStatics::SpawnEmitterAtLocation(
-					World, 
+					World,
 					BeamParticles,
-					TraceStart, 
-					FRotator::ZeroRotator, 
+					TraceStart,
+					FRotator::ZeroRotator,
 					true
 				);
 
@@ -164,4 +143,26 @@ void AHitscanWeapon::HandleWeaponLineTrace(
 			}
 		}
 	}
+}
+
+FVector AHitscanWeapon::TraceEndWithScatter(
+	const FVector& TraceStart, const FVector& HitTarget)
+{
+	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+
+	// Generate a random point within the sphere
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector()
+					  * FMath::FRandRange(0.0f, SphereRadius);
+	FVector EndLoc = SphereCenter + RandVec;
+
+	// Vector from start of linetrace to random endpoint
+	FVector ToEndLoc = EndLoc - TraceStart;
+
+	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.0f, 12, FColor::Orange, true);
+
+	FVector Result(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+	DrawDebugLine(GetWorld(), TraceStart, Result, FColor::White, true);
+	return Result;
 }

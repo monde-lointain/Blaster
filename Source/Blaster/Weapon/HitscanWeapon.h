@@ -30,7 +30,7 @@ public:
 		const FVector& TraceStart, const FVector& HitTarget);
 
 	void HandleWeaponLineTrace(
-		const FVector& TraceStart, const FVector& TraceEnd, FHitResult& OutHit);
+		const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
 
 	/** The damage dealt by the weapon */
 	UPROPERTY(EditAnywhere)

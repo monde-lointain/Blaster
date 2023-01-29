@@ -231,8 +231,6 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bAiming)
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
-
-	// Call the server RPC for firing a weapon.
 	if (bFireButtonPressed)
 	{
 		Fire();
@@ -243,6 +241,7 @@ void UCombatComponent::Fire()
 {
 	if (CanFire())
 	{
+		// Call the server RPC for firing a weapon.
 		ServerFire(HitTarget);
 
 		// Make the crosshairs spread apart when firing
