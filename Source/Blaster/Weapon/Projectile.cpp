@@ -130,7 +130,7 @@ void AProjectile::ExplodeDamage()
 				InstigatorController
 			);
 
-			DrawDebugSphere(
+			/*DrawDebugSphere(
 				GetWorld(),
 				GetActorLocation(),
 				DamageInnerRadius,
@@ -147,7 +147,7 @@ void AProjectile::ExplodeDamage()
 				FColor::Yellow,
 				true,
 				10.0f
-			);
+			);*/
 		}
 	}
 }

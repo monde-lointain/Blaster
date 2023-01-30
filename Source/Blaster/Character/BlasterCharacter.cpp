@@ -442,17 +442,17 @@ void ABlasterCharacter::PlayReloadMontage()
 				SectionName = FName("Rifle");
 				break;
 			}
-			/** TODO: Add proper reloading animations for the other weapons! */
 			case EWeaponType::EWT_RocketLauncher:
 			{
-				SectionName = FName("Rifle");
+				SectionName = FName("RocketLauncher");
 				break;
 			}
 			case EWeaponType::EWT_Pistol:
 			{
-				SectionName = FName("Rifle");
+				SectionName = FName("Pistol");
 				break;
 			}
+			// Just using the rifle montage here
 			case EWeaponType::EWT_SubmachineGun:
 			{
 				SectionName = FName("Rifle");
@@ -460,17 +460,20 @@ void ABlasterCharacter::PlayReloadMontage()
 			}
 			case EWeaponType::EWT_Shotgun:
 			{
-				SectionName = FName("Rifle");
+				SectionName = FName("Shotgun");
+				// Speed this one up a bit
+				AnimInstance->Montage_SetPlayRate(ReloadMontage, 1.2f);
 				break;
 			}
 			case EWeaponType::EWT_SniperRifle:
 			{
-				SectionName = FName("Rifle");
+				SectionName = FName("SniperRifle");
 				break;
 			}
+			// Just using the pistol montage here
 			case EWeaponType::EWT_GrenadeLauncher:
 			{
-				SectionName = FName("Rifle");
+				SectionName = FName("Pistol");
 				break;
 			}
 		}

@@ -159,10 +159,10 @@ FVector AHitscanWeapon::TraceEndWithScatter(
 	// Vector from start of linetrace to random endpoint
 	FVector ToEndLoc = EndLoc - TraceStart;
 
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.0f, 12, FColor::Orange, true);
+	//DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	//DrawDebugSphere(GetWorld(), EndLoc, 4.0f, 12, FColor::Orange, true);
 
 	FVector Result(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
-	DrawDebugLine(GetWorld(), TraceStart, Result, FColor::White, true);
+	//DrawDebugLine(GetWorld(), TraceStart, Result, FColor::White, true);
 	return Result;
 }
