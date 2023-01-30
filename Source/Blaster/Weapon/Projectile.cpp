@@ -121,8 +121,8 @@ void AProjectile::ExplodeDamage()
 				Damage,
 				MinimiumDamage,
 				GetActorLocation(),
-				InnerRadius,
-				OuterRadius,
+				DamageInnerRadius,
+				DamageOuterRadius,
 				DamageFalloff,
 				UDamageType::StaticClass(),
 				TArray<AActor*>(),
@@ -133,7 +133,7 @@ void AProjectile::ExplodeDamage()
 			DrawDebugSphere(
 				GetWorld(),
 				GetActorLocation(),
-				InnerRadius,
+				DamageInnerRadius,
 				12,
 				FColor::Red,
 				true,
@@ -142,7 +142,7 @@ void AProjectile::ExplodeDamage()
 			DrawDebugSphere(
 				GetWorld(),
 				GetActorLocation(),
-				OuterRadius,
+				DamageOuterRadius,
 				12,
 				FColor::Yellow,
 				true,

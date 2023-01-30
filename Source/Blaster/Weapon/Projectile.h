@@ -106,14 +106,14 @@ public:
 	 * dealt
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = RadialDamage)
-	float InnerRadius = 40.0f;
+	float DamageInnerRadius = 40.0f;
 
 	/**
 	 * (Radial damage projectiles only). The radius outside of which no damage
 	 * is dealt
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = RadialDamage)
-	float OuterRadius = 500.0f;
+	float DamageOuterRadius = 500.0f;
 
 	/**
 	 * (Radial damage projectiles only). Exponent that gets applied to the
