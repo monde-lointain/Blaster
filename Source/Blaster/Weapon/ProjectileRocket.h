@@ -7,8 +7,6 @@
 
 #include "ProjectileRocket.generated.h"
 
-class UNiagaraSystem;
-class UNiagaraComponent;
 class URocketMovementComponent;
 
 /**
@@ -26,26 +24,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	URocketMovementComponent* RocketMovementComponent;
 
-	/** The minimum damage dealt by the rocket */
-	UPROPERTY(EditDefaultsOnly, Category = Damage)
-	float MinimiumDamage = 5.0f;
-
-	/** The radius in which maximum damage is dealt */
-	UPROPERTY(EditDefaultsOnly, Category = Damage)
-	float InnerRadius = 40.0f;
-
-	/** The radius outside of which no damage is dealt */
-	UPROPERTY(EditDefaultsOnly, Category = Damage)
-	float OuterRadius = 500.0f;
-
-	/** Exponent that gets applied to the damage falloff equation */
-	UPROPERTY(EditDefaultsOnly, Category = Damage)
-	float DamageFalloff = 1.5f;
-
-	/** The mesh for the rocket */
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* RocketMesh;
-
 	/** Sound that plays while the rocket is flying */
 	UPROPERTY(EditAnywhere)
 	USoundCue* RocketLoop;
@@ -57,27 +35,6 @@ public:
 	/** Attenuation for the rocket loop */
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* RocketLoopAttenuation;
-
-	/** Particle system for the smoke trail particles */
-	UPROPERTY(EditAnywhere)
-	UNiagaraSystem* TrailSystem;
-
-	/** Component to store the trail particles in */
-	UPROPERTY(EditAnywhere)
-	UNiagaraComponent* TrailSystemComponent;
-
-	/** Handle to the timer for destroying rocket and smoke particles */
-	FTimerHandle SmokePersistTimer;
-
-	/**
-	 * Time the rocket and smoke particles should persist after impact before
-	 * being destroyed
-	 */
-	UPROPERTY(EditAnywhere)
-	float SmokePersistTime = 3.0f;
-
-	/** Destroys the rocket and smoke particles */
-	void DestroyTimerFinished();
 
 	/**
 	 * Overridden to not see the explosion or sound when this object is

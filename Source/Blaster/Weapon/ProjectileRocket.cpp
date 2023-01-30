@@ -4,7 +4,6 @@
 
 #include "RocketMovementComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,11 +12,11 @@
 AProjectileRocket::AProjectileRocket()
 {
 	// Initialize the mesh
-	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
-	RocketMesh->SetupAttachment(RootComponent);
+	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
+	ProjectileMesh->SetupAttachment(RootComponent);
 
 	// Disable collision
-	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Initialize the rocket movement component
 	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(
@@ -42,18 +41,7 @@ void AProjectileRocket::BeginPlay()
 	}
 
 	// Spawn the particle effects
-	if (TrailSystem)
-	{
-		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			TrailSystem,
-			GetRootComponent(),
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false
-		);
-	}
+	SpawnTrailSystem();
 
 	// Spawn the sound with its attenuation
 	if (RocketLoop && RocketLoopAttenuation)
@@ -85,49 +73,8 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent,
 		return;
 	}
 
-	APawn* InstigatorPawn = GetInstigator();
-
-	// Apply damage only on the server
-	if (InstigatorPawn && HasAuthority())
-	{
-		AController* InstigatorController = InstigatorPawn->GetController();
-
-		if (InstigatorController)
-		{
-			UGameplayStatics::ApplyRadialDamageWithFalloff(
-				this, 
-				Damage,
-				MinimiumDamage,
-				GetActorLocation(),
-				InnerRadius,
-				OuterRadius,
-				DamageFalloff,
-				UDamageType::StaticClass(),
-				TArray<AActor*>(),
-				this,
-				InstigatorController
-			);
-
-			//DrawDebugSphere(
-			//	GetWorld(),
-			//	GetActorLocation(),
-			//	InnerRadius,
-			//	12,
-			//	FColor::Red,
-			//	true,
-			//	10.0f
-			//);
-			//DrawDebugSphere(
-			//	GetWorld(),
-			//	GetActorLocation(),
-			//	OuterRadius,
-			//	12,
-			//	FColor::Yellow,
-			//	true,
-			//	10.0f
-			//);
-		}
-	}
+	// Deal radial damage
+	ExplodeDamage();
 
 	// Play the impact sounds and particle effects
 	if (ImpactParticles)
@@ -148,9 +95,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent,
 	}
 
 	// Hide the rocket mesh
-	if (RocketMesh)
+	if (ProjectileMesh)
 	{
-		RocketMesh->SetVisibility(false);
+		ProjectileMesh->SetVisibility(false);
 	}
 
 	// Disable collision
@@ -173,17 +120,7 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent,
 	}
 
 	// Set the timer for the missile to destroy itself
-	GetWorldTimerManager().SetTimer(
-		SmokePersistTimer,
-		this,
-		&AProjectileRocket::DestroyTimerFinished,
-		SmokePersistTime
-	);
-}
-
-void AProjectileRocket::DestroyTimerFinished()
-{
-	Destroy();
+	StartDestroyTimer();
 }
 
 void AProjectileRocket::Destroyed()

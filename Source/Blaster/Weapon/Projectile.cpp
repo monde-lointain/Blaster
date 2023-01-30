@@ -4,6 +4,8 @@
 
 #include "Blaster/Blaster.h"
 #include "Blaster/Character/BlasterCharacter.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
@@ -31,6 +33,22 @@ AProjectile::AProjectile()
 		ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(
 		ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
+}
+
+void AProjectile::SpawnTrailSystem()
+{
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -70,6 +88,68 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&AProjectile::DestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
+void AProjectile::ExplodeDamage()
+{
+	APawn* InstigatorPawn = GetInstigator();
+
+	// Apply damage only on the server
+	if (InstigatorPawn && HasAuthority())
+	{
+		AController* InstigatorController = InstigatorPawn->GetController();
+
+		if (InstigatorController)
+		{
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this,
+				Damage,
+				MinimiumDamage,
+				GetActorLocation(),
+				InnerRadius,
+				OuterRadius,
+				DamageFalloff,
+				UDamageType::StaticClass(),
+				TArray<AActor*>(),
+				this,
+				InstigatorController
+			);
+
+			DrawDebugSphere(
+				GetWorld(),
+				GetActorLocation(),
+				InnerRadius,
+				12,
+				FColor::Red,
+				true,
+				10.0f
+			);
+			DrawDebugSphere(
+				GetWorld(),
+				GetActorLocation(),
+				OuterRadius,
+				12,
+				FColor::Yellow,
+				true,
+				10.0f
+			);
+		}
+	}
 }
 
 void AProjectile::Destroyed()

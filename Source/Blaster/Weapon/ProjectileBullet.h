@@ -18,10 +18,6 @@ class BLASTER_API AProjectileBullet : public AProjectile
 public:
 	AProjectileBullet();
 
-	/** Handles projectile movement */
-	UPROPERTY(VisibleAnywhere)
-	UProjectileMovementComponent* ProjectileMovementComponent;
-
 protected:
 	/** Handles the projectile's behavior on impact */
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
