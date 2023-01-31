@@ -78,11 +78,24 @@ public:
 	void ServerThrowGrenade();
 
 	/**
+	 * Handles throwing grenades for clients that are not locally controlled
+	 * (NOTE: Not an RPC!)
+	 */
+	void ThrowGrenade_NonLocalClient();
+
+	/**
 	 * Indicates when the player has finished throwing a grenade so we can set
 	 * their combat state back to unoccupied
 	 */
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeFinished();
+
+	/** Spawns and launches a grenade projectile */
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	/** Toggles rendering the grenade on and off */
+	void ShowAttachedGrenade(bool bShow);
 
 protected:
 	virtual void BeginPlay() override;

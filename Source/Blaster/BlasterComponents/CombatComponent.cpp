@@ -412,12 +412,13 @@ void UCombatComponent::ThrowGrenade()
 	// Change the combat state
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 
-	// Play the grenade montage and move the weapon to the character's left hand
-	// (local players only)
+	// NOTE: local players only. The server will handle these in
+	// ServerThrowGrenade and non-local clients in ThrowGrenade_NonLocalClient
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 
 	// Only call for the server RPC here if we ARE the server
@@ -432,12 +433,21 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	// Change the combat state
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 
-	// Play the grenade montage and move the weapon to the character's left hand
-	// (server only)
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
+	}
+}
+
+void UCombatComponent::ThrowGrenade_NonLocalClient()
+{
+	if (Character && !Character->IsLocallyControlled())
+	{
+		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 }
 
@@ -446,6 +456,19 @@ void UCombatComponent::ThrowGrenadeFinished()
 	CombatState = ECombatState::ECS_Unoccupied;
 	// Reattach the weapon to the right hand (server only)
 	AttachActorToRightHand(EquippedWeapon);
+}
+
+void UCombatComponent::LaunchGrenade()
+{
+	ShowAttachedGrenade(false);
+}
+
+void UCombatComponent::ShowAttachedGrenade(bool bShow)
+{
+	if (Character && Character->AttachedGrenade)
+	{
+		Character->AttachedGrenade->SetVisibility(bShow);
+	}
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -742,13 +765,7 @@ void UCombatComponent::OnRep_CombatState()
 		}
 		case (ECombatState::ECS_ThrowingGrenade):
 		{
-			// Play the grenade montage and move the weapon to the character's
-			// left hand (non-locally controlled players only)
-			if (Character && !Character->IsLocallyControlled())
-			{
-				Character->PlayThrowGrenadeMontage();
-				AttachActorToLeftHand(EquippedWeapon);
-			}
+			ThrowGrenade_NonLocalClient();
 			break;
 		}
 	}
