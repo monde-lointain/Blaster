@@ -141,6 +141,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ElimMontage;
 
+	/** Mesh for grenades held by the player */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UStaticMeshComponent* AttachedGrenade;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;

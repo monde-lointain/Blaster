@@ -55,6 +55,12 @@ ABlasterCharacter::ABlasterCharacter()
 	DissolveTimeline =
 		CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimeline"));
 
+	// Initialize the grenade mesh
+	AttachedGrenade =
+		CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 

@@ -619,9 +619,10 @@ void UCombatComponent::Reload()
 	 * for all clients
 	 */
 
-	// Only message the server if we actually have ammo to save bandwidth. Only
-	// notify the server if we're not doing anything else
-	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
+	if (CarriedAmmo > 0 && 
+		CombatState == ECombatState::ECS_Unoccupied &&
+		EquippedWeapon && 
+		!EquippedWeapon->IsFull())
 	{
 		ServerReload();
 	}
