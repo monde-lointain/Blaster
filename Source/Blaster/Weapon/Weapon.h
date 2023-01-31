@@ -61,6 +61,9 @@ public:
 	/** Handles putting ammo into the weapon when reloading */
 	void AddAmmo(int32 AmountToAdd);
 
+	/** Toggles custom depth stencil pass */
+	void EnableCustomDepth(bool bEnable);
+
 	/** Textures for the weapon crosshairs */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;

@@ -34,6 +34,11 @@ AWeapon::AWeapon()
 		ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Set the custom depth stencil for all weapons
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
+
 	// Initialize the pickup sphere for the weapon
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -195,6 +200,9 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			// server because overlap events only occur on it
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			SetWeaponPhysicsEnabled(false);
+
+			// Disable the custom depth stencil
+			EnableCustomDepth(false);
 			break;
 		}
 		case EWeaponState::EWS_Dropped:
@@ -208,6 +216,11 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			// Enable physics when the weapon gets dropped so we can see the
 			// weapon dropping and bouncing on the ground
 			SetWeaponPhysicsEnabled(true);
+
+			// Enable the custom depth stencil
+			WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+			WeaponMesh->MarkRenderStateDirty();
+			EnableCustomDepth(true);
 			break;
 		}
 	}
@@ -231,8 +244,12 @@ void AWeapon::OnRep_WeaponState()
 		case EWeaponState::EWS_Equipped:
 		{
 			ShowPickupWidget(false);
+
 			// Disable physics on the weapon when the player equips it
 			SetWeaponPhysicsEnabled(false);
+
+			// Disable the custom depth stencil
+			EnableCustomDepth(false);
 			break;
 		}
 		case EWeaponState::EWS_Dropped:
@@ -240,6 +257,11 @@ void AWeapon::OnRep_WeaponState()
 			// Enable physics when the weapon gets dropped so we can see the
 			// weapon dropping and bouncing on the ground
 			SetWeaponPhysicsEnabled(true);
+
+			// Enable the custom depth stencil
+			WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+			WeaponMesh->MarkRenderStateDirty();
+			EnableCustomDepth(true);
 			break;
 		}
 	}
@@ -341,4 +363,12 @@ void AWeapon::AddAmmo(int32 AmountToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmountToAdd, 0, MaxAmmo);
 	SetAmmoCountOnOwnerHUD();
+}
+
+void AWeapon::EnableCustomDepth(bool bEnable)
+{
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
 }

@@ -2,6 +2,11 @@
 
 #define TRACE_LENGTH 80000.0f
 
+// Colors for the custom depth stencil values
+#define CUSTOM_DEPTH_PURPLE 250
+#define CUSTOM_DEPTH_BLUE 251
+#define CUSTOM_DEPTH_TAN 252
+
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
