@@ -2,6 +2,7 @@
 
 #include "Weapon.h"
 
+#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Components/SphereComponent.h"
@@ -144,7 +145,21 @@ void AWeapon::SpendRound()
 
 void AWeapon::OnRep_Ammo()
 {
-	SetAmmoCountOnOwnerHUD();
+	if (!BlasterOwnerCharacter)
+	{
+		BlasterOwnerCharacter = Cast<ABlasterCharacter>(GetOwner());
+	}
+
+	if (BlasterOwnerCharacter)
+	{
+		// Jumping to the end of the shotgun montage for clients
+		if (BlasterOwnerCharacter->Combat && IsFull())
+		{
+			BlasterOwnerCharacter->Combat->JumpToShotgunEnd();
+		}
+
+		SetAmmoCountOnOwnerHUD();
+	}
 }
 
 void AWeapon::OnRep_Owner()
@@ -201,6 +216,11 @@ void AWeapon::SetWeaponState(EWeaponState State)
 bool AWeapon::IsEmpty()
 {
 	return Ammo <= 0;
+}
+
+bool AWeapon::IsFull()
+{
+	return Ammo == MaxAmmo;
 }
 
 // Handles the replication of the weapon's state from the server to the clients

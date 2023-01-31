@@ -45,8 +45,21 @@ public:
 	/** Updates the ammo count on reload */
 	void UpdateAmmoCounts();
 
+	/** Updates the ammo count for the shotgun on reload */
+	void UpdateShotgunAmmoCounts();
+
 	/** Indicates whether the fire buton has been pressed or not. */
 	bool bFireButtonPressed;
+
+	/** Handles reloading shotgun shells. */
+	UFUNCTION(BlueprintCallable)
+	void ShotgunShellReload();
+
+	/**
+	 * Goes to the end of the shotgun reload montage. Called after breaking the
+	 * reload cycle in the shotgun
+	 */
+	void JumpToShotgunEnd();
 
 protected:
 	virtual void BeginPlay() override;

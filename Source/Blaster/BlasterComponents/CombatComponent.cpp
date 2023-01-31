@@ -2,6 +2,7 @@
 
 #include "CombatComponent.h"
 
+#include "Blaster/Character/BlasterAnimInstance.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
@@ -38,6 +39,25 @@ void UCombatComponent::GetLifetimeReplicatedProps(
 
 	// Register the combat state to be replicated by the server
 	DOREPLIFETIME(UCombatComponent, CombatState);
+}
+
+void UCombatComponent::ShotgunShellReload()
+{
+	if (Character && Character->HasAuthority())
+	{
+		UpdateShotgunAmmoCounts();
+	}
+}
+
+void UCombatComponent::JumpToShotgunEnd()
+{
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && Character->ReloadMontage)
+	{
+		AnimInstance->Montage_Play(Character->ReloadMontage);
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
 }
 
 void UCombatComponent::BeginPlay()
@@ -332,6 +352,15 @@ bool UCombatComponent::CanFire()
 		return false;
 	}
 
+	// Special handling for shotguns
+	if (!EquippedWeapon->IsEmpty() &&
+		bCanFire &&
+		CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		return true;
+	}
+
 	return !EquippedWeapon->IsEmpty() && 
 		   bCanFire &&
 		   CombatState == ECombatState::ECS_Unoccupied;
@@ -347,6 +376,17 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	bool bShouldJumpToShotgunEnd =
+		CombatState == ECombatState::ECS_Reloading && 
+		EquippedWeapon &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+		CarriedAmmo == 0;
+
+	if (bShouldJumpToShotgunEnd)
+	{
+		JumpToShotgunEnd();
 	}
 }
 
@@ -376,6 +416,19 @@ void UCombatComponent::MulticastFire_Implementation(
 {
 	if (EquippedWeapon == nullptr)
 	{
+		return;
+	}
+
+	// For shotguns we CAN fire while reloading
+	if (Character && 
+		CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{ 
+		Character->PlayFireMontage(bIsAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+		// Manually set combat state back to unoccupied since we won't always
+		// get to the anim notify at the end of the reload animation
+		CombatState = ECombatState::ECS_Unoccupied;
 		return;
 	}
 
@@ -602,6 +655,42 @@ void UCombatComponent::UpdateAmmoCounts()
 
 	// Add the ammo into the weapon
 	EquippedWeapon->AddAmmo(ReloadAmount);
+}
+
+void UCombatComponent::UpdateShotgunAmmoCounts()
+{
+	if (!Character || !EquippedWeapon)
+	{
+		return;
+	}
+
+	// Update the carried ammo counters for the shotgun. Only load in one shell at a time
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	// Update the carried ammo counter on the HUD
+	if (!Controller)
+	{
+		Controller = Cast<ABlasterPlayerController>(Character->Controller);
+	}
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	// Add the ammo into the weapon
+	EquippedWeapon->AddAmmo(1);
+
+	bCanFire = true;
+
+	// Jump to the end montage when full or when empty (only on server)
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0)
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()

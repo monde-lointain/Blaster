@@ -223,4 +223,7 @@ public:
 
 	/** Returns true if Ammo == 0 */
 	bool IsEmpty();
+
+	/** Returns true if Ammo == MaxAmmo */
+	bool IsFull();
 };

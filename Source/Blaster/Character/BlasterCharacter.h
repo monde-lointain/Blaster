@@ -120,6 +120,22 @@ public:
 		meta = (AllowPrivateAccess = "true"))
 	UCombatComponent* Combat;
 
+	/** Animation montage for firing weapons */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* FireWeaponMontage;
+
+	/** Animation montage for reloading */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
+
+	/** Animation montage for getting hit */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* HitReactMontage;
+
+	/** Animation montage for getting eliminated */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ElimMontage;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
@@ -179,22 +195,6 @@ private:
 	ETurningInPlace TurningInPlace;
 
 	void TurnInPlace(float DeltaTime);
-
-	/** Animation montage for firing weapons */
-	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* FireWeaponMontage;
-
-	/** Animation montage for reloading */
-	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* ReloadMontage;
-
-	/** Animation montage for getting hit */
-	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* HitReactMontage;
-
-	/** Animation montage for getting eliminated */
-	UPROPERTY(EditAnywhere, Category = Combat)
-	UAnimMontage* ElimMontage;
 
 	void HideCameraIfCharacterIsClose();
 
