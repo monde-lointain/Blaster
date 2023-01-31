@@ -35,6 +35,15 @@ public:
 	/** Handles equipping weapons */
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
+	void ReloadEmptyWeapon();
+
+	void PlayEquipWeaponSound();
+
+	/** Updates the ammo counts on the ammo map and the HUD */
+	void UpdateCarriedAmmo();
+
+	void DropEquippedWeapon();
+
 	/** Clientside reload function */
 	void Reload();
 
@@ -93,12 +102,9 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
-	/**
-	 * Sets the weapon state and attaches the weapon to the character's right
-	 * hand socket. Called on both server and clients to ensure that the physics
-	 * properties are always correct when equipping a weapon
-	 */
-	void UpdateWeaponStateAndAttach();
+	/** For attaching actors to the character's hands */
+	void AttachActorToRightHand(AActor* ActorToAttach);
+	void AttachActorToLeftHand(AActor* ActorToAttach);
 
 	/** Called whenever a player presses the fire button. */
 	void FireButtonPressed(bool bPressed);

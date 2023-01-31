@@ -338,11 +338,7 @@ void UCombatComponent::FireTimerFinished()
 		Fire();
 	}
 
-	// Autoreload if the weapon gets emptied
-	if (EquippedWeapon->IsEmpty())
-	{
-		Reload();
-	}
+	ReloadEmptyWeapon();
 }
 
 bool UCombatComponent::CanFire()
@@ -416,10 +412,12 @@ void UCombatComponent::ThrowGrenade()
 	// Change the combat state
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 
-	// Play the grenade montage
+	// Play the grenade montage and move the weapon to the character's left hand
+	// (local players only)
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 
 	// Only call for the server RPC here if we ARE the server
@@ -434,16 +432,20 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	// Change the combat state
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 
-	// Play the grenade montage
+	// Play the grenade montage and move the weapon to the character's left hand
+	// (server only)
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 }
 
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
+	// Reattach the weapon to the right hand (server only)
+	AttachActorToRightHand(EquippedWeapon);
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -538,21 +540,38 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		return;
 	}
 	// If we're already holding a weapon, drop it and pick up the new one
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->Dropped();
-	}
-
+	DropEquippedWeapon();
 	// Replicated from server to clients
 	EquippedWeapon = WeaponToEquip;
-
-	UpdateWeaponStateAndAttach();
-
+	// Update the weapon state
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
 	// Automatically replicated by the actor class method AActor::OnRep_Owner
 	EquippedWeapon->SetOwner(Character);
-
 	// Update the weapon ammo counter on the HUD
 	EquippedWeapon->SetAmmoCountOnOwnerHUD();
+	UpdateCarriedAmmo();
+	PlayEquipWeaponSound();
+	// Autoreload if the weapon is empty when it gets picked up
+	ReloadEmptyWeapon();
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::ReloadEmptyWeapon()
+{
+	if (EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
+}
+
+void UCombatComponent::UpdateCarriedAmmo()
+{
+	if (!EquippedWeapon)
+	{
+		return;
+	}
 
 	// Set the carried ammo amount on the player to the amount they have on them
 	// for that particular weapon type
@@ -570,25 +589,26 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+}
 
-	// Play the weapon equip sound
+void UCombatComponent::PlayEquipWeaponSound()
+{
 	if (EquippedWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
-			this, 
-			EquippedWeapon->EquipSound, 
+			this,
+			EquippedWeapon->EquipSound,
 			Character->GetActorLocation()
 		);
 	}
-	
-	// Autoreload if the weapon is empty when it gets picked up
-	if (EquippedWeapon->IsEmpty())
-	{
-		Reload();
-	}
+}
 
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+void UCombatComponent::DropEquippedWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
 }
 
 void UCombatComponent::Reload()
@@ -721,12 +741,12 @@ void UCombatComponent::OnRep_CombatState()
 		}
 		case (ECombatState::ECS_ThrowingGrenade):
 		{
-			// Only play the montage here if the character is not locally
-			// controlled, since the montage would've been played already
-			// otherwise
+			// Play the grenade montage and move the weapon to the character's
+			// left hand (non-locally controlled players only)
 			if (Character && !Character->IsLocallyControlled())
 			{
 				Character->PlayThrowGrenadeMontage();
+				AttachActorToLeftHand(EquippedWeapon);
 			}
 			break;
 		}
@@ -769,37 +789,54 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		// The server automatically replicates the weapon state, but we're
 		// making sure to do it again here because if physics doesn't get
 		// disabled in time then the character won't be able to equip the weapon
-		UpdateWeaponStateAndAttach();
-		
-		// Play the weapon equip sound
-		if (EquippedWeapon->EquipSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(
-				this,
-				EquippedWeapon->EquipSound,
-				Character->GetActorLocation()
-			);
-		}
-
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachActorToRightHand(EquippedWeapon);
+		PlayEquipWeaponSound();
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
 }
 
 // NOTE: Automatically propagated to clients when called on the server
-void UCombatComponent::UpdateWeaponStateAndAttach()
+void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 {
-	// Update the weapon state
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	if (!Character || !Character->GetMesh() || !ActorToAttach)
+	{
+		return;
+	}
 
-	// Attach the weapon to the player's right hand socket
 	USkeletalMeshComponent* CharacterMesh = Character->GetMesh();
 	const USkeletalMeshSocket* HandSocket =
 		CharacterMesh->GetSocketByName("RightHandSocket");
 
 	if (HandSocket)
 	{
-		HandSocket->AttachActor(EquippedWeapon, CharacterMesh);
+		HandSocket->AttachActor(ActorToAttach, CharacterMesh);
+	}
+}
+
+// NOTE: Automatically propagated to clients when called on the server
+void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
+{
+	if (!Character || !Character->GetMesh() || !ActorToAttach || !EquippedWeapon)
+	{
+		return;
+	}
+
+	// Determine which socket we should attach the weapon to
+	bool bUsePistolSocket =
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol ||
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachineGun;
+
+	FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
+
+	USkeletalMeshComponent* CharacterMesh = Character->GetMesh();
+	const USkeletalMeshSocket* HandSocket =
+		CharacterMesh->GetSocketByName(SocketName);
+
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(ActorToAttach, CharacterMesh);
 	}
 }
 
