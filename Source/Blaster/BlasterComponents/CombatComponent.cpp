@@ -366,42 +366,6 @@ bool UCombatComponent::CanFire()
 		   CombatState == ECombatState::ECS_Unoccupied;
 }
 
-void UCombatComponent::OnRep_CarriedAmmo()
-{
-	// Update the carried ammo counter on the HUD
-	if (!Controller)
-	{
-		Controller = Cast<ABlasterPlayerController>(Character->Controller);
-	}
-	if (Controller)
-	{
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
-	}
-
-	bool bShouldJumpToShotgunEnd =
-		CombatState == ECombatState::ECS_Reloading && 
-		EquippedWeapon &&
-		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
-		CarriedAmmo == 0;
-
-	if (bShouldJumpToShotgunEnd)
-	{
-		JumpToShotgunEnd();
-	}
-}
-
-void UCombatComponent::InitializeCarriedAmmo()
-{
-	// Initialize the ammo for all the different weapon types
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, AssaultRifleStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, RocketLauncherStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, PistolStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, SubmachineGunStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, ShotgunStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, SniperRifleStartAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, GrenadeLauncherStartAmmo);
-}
-
 // When a client calls this server RPC, the server will execute its multicast
 // RPC which will replicate the fire routines back down to the clients
 void UCombatComponent::ServerFire_Implementation(
@@ -439,6 +403,47 @@ void UCombatComponent::MulticastFire_Implementation(
 		Character->PlayFireMontage(bIsAiming);
 		EquippedWeapon->Fire(TraceHitTarget);
 	}
+}
+
+void UCombatComponent::ThrowGrenade()
+{
+	// Don't throw a grenade unless we're not doing anything
+	if (CombatState != ECombatState::ECS_Unoccupied)
+	{
+		return;
+	}
+
+	// Change the combat state
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+
+	// Play the grenade montage
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+
+	// Only call for the server RPC here if we ARE the server
+	if (Character && !Character->HasAuthority())
+	{
+		ServerThrowGrenade();
+	}
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	// Change the combat state
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+
+	// Play the grenade montage
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+}
+
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -527,7 +532,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		return;
 	}
-
+	// We're only allowed to equip weapons if we're not doing anything else
+	if (CombatState != ECombatState::ECS_Unoccupied)
+	{
+		return;
+	}
 	// If we're already holding a weapon, drop it and pick up the new one
 	if (EquippedWeapon)
 	{
@@ -590,9 +599,9 @@ void UCombatComponent::Reload()
 	 * for all clients
 	 */
 
-	// Only message the server if we actually have ammo to save bandwidth. Don't
-	// notify the server if we're already reloading either
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	// Only message the server if we actually have ammo to save bandwidth. Only
+	// notify the server if we're not doing anything else
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		ServerReload();
 	}
@@ -710,6 +719,17 @@ void UCombatComponent::OnRep_CombatState()
 			HandleReload();
 			break;
 		}
+		case (ECombatState::ECS_ThrowingGrenade):
+		{
+			// Only play the montage here if the character is not locally
+			// controlled, since the montage would've been played already
+			// otherwise
+			if (Character && !Character->IsLocallyControlled())
+			{
+				Character->PlayThrowGrenadeMontage();
+			}
+			break;
+		}
 	}
 }
 
@@ -781,4 +801,40 @@ void UCombatComponent::UpdateWeaponStateAndAttach()
 	{
 		HandSocket->AttachActor(EquippedWeapon, CharacterMesh);
 	}
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	// Update the carried ammo counter on the HUD
+	if (!Controller)
+	{
+		Controller = Cast<ABlasterPlayerController>(Character->Controller);
+	}
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	bool bShouldJumpToShotgunEnd =
+		CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+		CarriedAmmo == 0;
+
+	if (bShouldJumpToShotgunEnd)
+	{
+		JumpToShotgunEnd();
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	// Initialize the ammo for all the different weapon types
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, AssaultRifleStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, RocketLauncherStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, PistolStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubmachineGun, SubmachineGunStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, ShotgunStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, SniperRifleStartAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, GrenadeLauncherStartAmmo);
 }

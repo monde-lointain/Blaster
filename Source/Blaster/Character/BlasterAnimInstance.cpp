@@ -171,15 +171,16 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		//);
 	}
 
-	// Don't rotate the right hand, use FABRIK or use aim offsets when reloading
+	// Only use FABRIK, aim offsets or right hand rotation when we're not doing
+	// anything
 	bShouldUseFABRIK =
-		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+		BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 	// Disable right hand rotation and aim offsets when we're in the cooldown
-	// state too
+	// state
 	bShouldUseAimOffsets =
-		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading &&
+		BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied &&
 		!BlasterCharacter->bDisableGameplay;
 	bShouldRotateRightHand =
-		BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading &&
+		BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied &&
 		!BlasterCharacter->bDisableGameplay;
 }

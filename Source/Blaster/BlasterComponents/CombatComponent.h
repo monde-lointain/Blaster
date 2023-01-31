@@ -61,6 +61,20 @@ public:
 	 */
 	void JumpToShotgunEnd();
 
+	/** Handles throwing grenades */
+	void ThrowGrenade();
+
+	/** Server RPC for throwing grenades */
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
+
+	/**
+	 * Indicates when the player has finished throwing a grenade so we can set
+	 * their combat state back to unoccupied
+	 */
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+
 protected:
 	virtual void BeginPlay() override;
 

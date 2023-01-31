@@ -59,6 +59,7 @@ public:
 	/** These handle playing various animation montages for the player */
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
+	void PlayThrowGrenadeMontage();
 	void PlayHitReactMontage();
 	void PlayElimMontage();
 
@@ -128,6 +129,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ReloadMontage;
 
+	/** Animation montage for throwing grenades */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
+
 	/** Animation montage for getting hit */
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
@@ -151,6 +156,7 @@ protected:
 	void AimButtonReleased();
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void GrenadeButtonPressed();
 
 	/**
 	 * Calculates the aim offset between the direction the player is facing and
