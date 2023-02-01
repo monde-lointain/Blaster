@@ -5,6 +5,7 @@
 #include "Blaster/Character/BlasterAnimInstance.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/Weapon/Projectile.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
@@ -403,8 +404,8 @@ void UCombatComponent::MulticastFire_Implementation(
 
 void UCombatComponent::ThrowGrenade()
 {
-	// Don't throw a grenade unless we're not doing anything
-	if (CombatState != ECombatState::ECS_Unoccupied)
+	// Don't throw a grenade unless we're not doing anything and holding a weapon
+	if (CombatState != ECombatState::ECS_Unoccupied || !EquippedWeapon)
 	{
 		return;
 	}
@@ -461,6 +462,30 @@ void UCombatComponent::ThrowGrenadeFinished()
 void UCombatComponent::LaunchGrenade()
 {
 	ShowAttachedGrenade(false);
+
+	// Launch on server only
+	if (Character && 
+		Character->HasAuthority() && 
+		GrenadeClass &&
+		Character->AttachedGrenade)
+	{
+		const FVector StartLocation =
+			Character->AttachedGrenade->GetComponentLocation();
+		// Just so we have the direction for where we're throwing at
+		FVector ToTarget = HitTarget - StartLocation;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+
+		UWorld* World = GetWorld();
+
+		if (World)
+		{
+			World->SpawnActor<AProjectile>(
+				GrenadeClass, StartLocation, ToTarget.Rotation(), SpawnParams);
+		}
+	}
 }
 
 void UCombatComponent::ShowAttachedGrenade(bool bShow)

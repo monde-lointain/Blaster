@@ -14,6 +14,7 @@ class AWeapon;
 class ABlasterCharacter;
 class ABlasterPlayerController;
 class ABlasterHUD;
+class AProjectile;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -97,6 +98,10 @@ public:
 	/** Toggles rendering the grenade on and off */
 	void ShowAttachedGrenade(bool bShow);
 
+	/** Class used for the handheld grenade */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectile> GrenadeClass;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -177,7 +182,7 @@ private:
 	bool bIsAiming;
 
 	/** Walking speed while not aiming */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float BaseWalkSpeed;
 
 	/** 
@@ -186,7 +191,7 @@ private:
 	 * Note that we need to set these here, because the base character movement
 	 * functionality only provides movement speeds for walking and crouching.
 	 */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float AimWalkSpeed;
 
 	/**
