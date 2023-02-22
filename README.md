@@ -1,5 +1,5 @@
 # Blaster
-Online multiplayer shooter created in Unreal Engine 5 (WIP)<br>
+Online multiplayer shooter created in Unreal Engine 5 (WIP)<br><br>
 Current features implemented include a fully functioning character class with movement, firing and death animations, multiple weapon classes for projectile, linetrace and radial damage, score tracking, pre- and post-match cooldown periods.<br><br>
 <img width="629" alt="ss1" src="https://user-images.githubusercontent.com/114368550/220678081-352d5c04-0f9c-4968-ba1b-7dde67cbe308.PNG">
 <img width="632" alt="ss2" src="https://user-images.githubusercontent.com/114368550/220678094-ebf93074-1cf1-4c83-a7d4-2f3f205f283a.PNG">
